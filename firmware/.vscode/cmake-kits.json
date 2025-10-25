@@ -6,7 +6,7 @@
             "CXX": "${command:raspberry-pi-pico.getCxxCompilerPath}"
         },
         "environmentVariables": {
-            "PATH": "${command:raspberry-pi-pico.getEnvPath};${env:PATH}"
+            "PATH": "${command:raspberry-pi-pico.getEnvPath};${env:USERPROFILE}/.pico-sdk/ninja/v1.12.1;${env:PATH}"
         },
         "cmakeSettings": {
             "Python3_EXECUTABLE": "${command:raspberry-pi-pico.getPythonPath}"
