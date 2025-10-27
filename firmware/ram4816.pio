@@ -75,11 +75,9 @@ skip_ras:
 
 % c-sdk {
 // Original delay numbers are 27, 5, 3, 13, 9
-//include "constants.h"
-#define RAM4816_DELAYS 4
+#include "constants.h"
 #define RAM4816_DELAY_FIELDS 8
-#define STARTING_PIN 5
-#define PIN_COUNT 17
+#define RAM4816_DELAYS 4
 
 static const uint8_t ram4816_delays[RAM4816_DELAYS][RAM4816_DELAY_FIELDS] = {
     {0, 0,  20, 2,  2,  6,  5,  0}, // 100ns
@@ -92,23 +90,23 @@ static inline void ram4816_program_init(PIO pio, uint sm, uint offset) {
     uint count;
 
     // Set up pins.
-    for (count = 0; count < PIN_COUNT; count++) {
-        pio_gpio_init(pio, STARTING_PIN + count);
-        gpio_set_slew_rate(STARTING_PIN + count, GPIO_SLEW_RATE_FAST);
-        gpio_set_drive_strength(STARTING_PIN + count, GPIO_DRIVE_STRENGTH_4MA);
+    for (count = 0; count < TOTAL_PIN_COUNT; count++) {
+        pio_gpio_init(pio, BASE_PIN + count);
+        gpio_set_slew_rate(BASE_PIN + count, GPIO_SLEW_RATE_FAST);
+        gpio_set_drive_strength(BASE_PIN + count, GPIO_DRIVE_STRENGTH_4MA);
     }
 
-    pio_sm_set_consecutive_pindirs(pio, sm, STARTING_PIN, 13, true); // true=output
-    pio_sm_set_consecutive_pindirs(pio, sm, STARTING_PIN + 16, 1, false); // false=input
+    pio_sm_set_consecutive_pindirs(pio, sm, OUTPUT_BASE_PIN, OUTPUT_PIN_COUNT, true); // true=output
+    pio_sm_set_consecutive_pindirs(pio, sm, INPUT_BASE_PIN, INPUT_PIN_COUNT, false); // false=input
 
     pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
 
     pio_sm_config c = ram4816_program_get_default_config(offset);
 
     // A0, A1, A2, A3, A4, A5, A6, nc, nc, D, WR, RAS, CAS, nc, nc, nc, IN
-    sm_config_set_out_pins(&c, STARTING_PIN, 10);
-    sm_config_set_set_pins(&c, STARTING_PIN + 10, 3); // Max is 5.
-    sm_config_set_in_pins(&c, STARTING_PIN + 16);
+    sm_config_set_out_pins(&c, BASE_PIN, 10);
+    sm_config_set_set_pins(&c, BASE_PIN + 10, 3); // Max is 5.
+    sm_config_set_in_pins(&c, BASE_PIN + 16);
 
     // Shift right, Autopull off, 20 bits (1 + 1 + 8 + 10) at a time
     sm_config_set_out_shift(&c, true, false, 20);
@@ -170,8 +168,8 @@ void ram4816_setup_pio(uint speed_grade, uint variant)
         &pio,                      // Return the claimed PIO Block
         &sm,                       // Return the claimed state machine
         &offset,                   // Return the instruction list offset
-        STARTING_PIN,              // The first GPIO pin we will claim
-        PIN_COUNT,                  // How many sequential pins we want
+        BASE_PIN,                  // The first GPIO pin we will claim
+        TOTAL_PIN_COUNT,           // How many sequential pins we want
         true                       // Claim pins exclusively?
     );
 
