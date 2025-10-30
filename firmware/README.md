@@ -1,6 +1,6 @@
-[[toc]]
-
 # Glossary of Terms Related to Vintage RAM Operation and PIO Programming
+
+[[toc]]
 
 ## Pico PIO Programming
 
@@ -78,7 +78,7 @@ a split of delay and sideset directives from all delay (default) to all sides.
 
 #### Delays
 
-Delays are specified in assembly by a number in square brackets e.g. 
+Delays are specified in assembly by a number in square brackets e.g.
 
     SET PINS, 1 [5]
 
@@ -86,16 +86,15 @@ Delay values, by default, represent an exact number of additional clock cycles.
 So the line above would take six cycles complete. If you are using sidesets,
 you will have a reduced number of delay values at your disposal - as delays and
 sides share the same bit range. We can however patch each delay number so that
-it is an index into a table of arbitraty values. This not only saves bit space
-but also allows us to use the same PIO program with different sets of
-timings. You will see that the author of this project did just that! So we
-can use the same program to test ram a chip at all of its manufactured
-speed ratings!
+it is uesed as an index into a table of arbitraty values. This allows
+us to use the same PIO program with different sets of timings. You will
+see that the author of this project did just that! So we can use the same
+program to test ram a chip family at all of its manufactured speed ratings!
 
 #### Sidesets
 
 Sidesets are optional bits in a PIO instruction that allow you to set GPIO pin
-states in parallel with executing the instruction. You can toggle pins with 
+states in parallel with executing the instruction. You can toggle pins with
 sidesets while performing other operations - like JMP, MOV, or PUSH.
 
 The benefit of this feature is that you can save a precious command line or
@@ -145,9 +144,6 @@ this and additional 'convention' elements.
 | Program descriptor       | `const struct pio_program <name>_program`| Main variable used with `pio_add_program()`      |
 | Default config function  | `<name>_program_get_default_config()`    | Returns a pre-filled `pio_sm_config`             |
 
-
-
-
 ### PIO Block
 
 The twelve state machines are split between three containers knowns as PIO
@@ -189,9 +185,5 @@ type interacts with their pins differently:
 - **SET** applies the same value to all assigned pins.
 - **SIDES** is limited to 0–5 bits and runs in parallel with the main instruction.
 - You must also configure pin directions using `pio_sm_set_consecutive_pindirs()` or `pio_gpio_init()`.
-
-
-
-
 
 ## DRAM Operations

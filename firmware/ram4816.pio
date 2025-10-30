@@ -160,7 +160,7 @@ void ram4816_setup_pio(uint speed_grade, uint variant)
     set_current_pio_program(&ram4816_program); 
 
     // Patch the program with the correct delay values. This will replace the
-    // standard cycle mutiple with an index into a list of custom values.
+    // standard cycle mutiple with an index into this list of custom values.
     pio_patch_delays(ram4816_delays[speed_grade], RAM4816_DELAY_FIELDS); // from patcher.c
 
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
