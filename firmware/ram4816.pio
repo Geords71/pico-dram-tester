@@ -86,7 +86,7 @@ skip_ras:
                                              //0   1   2  3   4   5   6   7
 static const uint8_t ram4816_delays[3][32] = {{0,  0, 26, 5,  9,  6,  3,  0},    // 100ns
                                               {0,  0, 29, 5, 14,  7,  4,  0},    // 120ns
-                                              {0,  0, 34, 5, 23,  7,  5,  0} };  // 150ns
+                                              {0,  3, 31, 5, 23,  7,  5,  0} };  // 150ns
 
 static inline void ram4816_program_init(PIO pio, uint sm, uint offset, uint pin) {
     uint count;
