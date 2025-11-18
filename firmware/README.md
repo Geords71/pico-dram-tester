@@ -204,6 +204,31 @@ write cycle are being triggered 'just in spec', when compared to the minimum
 operating timings specified in a chip's data sheet for appropriately rated
 version.
 
+### Tolerances
+
+### Overview
+
+Manfacturers would decide chip speeds at the end of a manufacturing run. ANd
+ 'bin' them into classes based on access time and potentially other key
+ timings. This means that, say, a 150ns chip might still be able to scrape a
+ pass on an 'just-in-spec' test at the next highest speed. It should not pass
+ a test at two grades faster, however.
+
+### 📊 DRAM Speed Binning Tolerances (1980s)
+
+| Speed Grade | Nominal tRAC | Typical Tolerance | Timing Range (ns) | Notes                                |
+|-------------|--------------|-------------------|--------------------|--------------------------------------|
+| -15         | 150 ns       | ±15%              | 127.5–172.5 ns     | Common for 4164, 41256               |
+| -12         | 120 ns       | ±10%              | 108–132 ns         | Used in faster 64K/256K DRAM         |
+| -10         | 100 ns       | ±7%               | 93–107 ns          | Often binned from same wafers        |
+| -8          | 80 ns        | ±5%               | 76–84 ns           | Premium or military-grade            |
+| -7          | 70 ns        | ±5%               | 66.5–73.5 ns       | Rare, high-performance bins          |
+
+#### Notes
+
+- **tRAC**: Row Access Time — from RAS falling edge to valid data out
+- Tolerances reflect manufacturer binning margins, not absolute electrical limits
+- Faster bins often came from the same wafer as slower parts
 
 ### The Read Loop
 
