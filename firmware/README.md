@@ -298,15 +298,21 @@ tCAC is met. The fastest access time is only achievable with the former approach
 
 ### The Write Loop
 
-#### Late Write?
+#### Late Write or Early Write?
 
 An early write is one where the W pin is lowered before CAS is lowered within
-a threshold know as tWCS. For some chips, tWCS is zero. However, if CAS and W
-are lowered at the same time. It is not clear if we are performing an early or
+a threshold know as tWCS. For some chips, tWCS is zero and in this scenrio, 
+if CAS and W are lowered at the same time. It is not clear if we are performing an early or
 a late write - as W going low is not instantaneous and tWCS is measured from
 when W reaches its low level. So it is possible that - with our common
 test PIOs as they stand - that we are in late write mode with an indeterminate
-value on Q. It is assumed that the multiple write cycles can be safely performed
+value on Q.
+
+Some chips have a small negative tWCS - which means that early write *can*
+be achieved by lowering W and CAS at the same. So, depending on the specific
+chip, our write cycle will be either Early Write or a very early Late Write!
+
+It is assumed that the multiple write cycles can be safely performed
 end-on-end at tRC intervals, rather than tRWC. The author is not 100% clear on
 this point, but delays listed on the sheets in the timings directory currently
 rely on this assumption. CAS and W going low at the same time can never result
