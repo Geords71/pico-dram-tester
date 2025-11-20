@@ -232,8 +232,6 @@ Manfacturers would decide chip speeds at the end of a manufacturing run. ANd
 
 ### The Read Loop
 
-#### Overview
-
 The Basic Read Loop runs as follows:
 
 #### Row and Column Address Select Pre-charging
@@ -301,7 +299,7 @@ tCAC is met. The fastest access time is only achievable with the former approach
 #### Late Write or Early Write?
 
 An early write is one where the W pin is lowered before CAS is lowered within
-a threshold know as tWCS. For some chips, tWCS is zero and in this scenrio, 
+a threshold know as tWCS. For some chips, tWCS is zero and in this scenrio,
 if CAS and W are lowered at the same time. It is not clear if we are performing an early or
 a late write - as W going low is not instantaneous and tWCS is measured from
 when W reaches its low level. So it is possible that - with our common
