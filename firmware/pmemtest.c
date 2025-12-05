@@ -799,7 +799,7 @@ int main() {
     int i, retval;
 
     // Increase core voltage slightly (default is 1.1V) to better handle overclock
-    vreg_set_voltage(VREG_VOLTAGE_1_25);
+    vreg_set_voltage(VREG_VOLTAGE_1_30);
 
     // USB Mass storage initialization. Untested.
     //board_init();
