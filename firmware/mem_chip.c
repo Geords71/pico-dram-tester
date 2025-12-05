@@ -120,6 +120,21 @@ void write_ram1b1r_8p(int addr, int data)
     pio_sm_get(pio, sm);
 }
 
+int calc_7p(int addr) {
+    // Because we only have seven pins, need to do some bit shifting to be able
+    // to re-use the 8pin read function. This works because what is the 8th pin
+    // on 64k chips is not connected on 16k examples.
+    return (addr & 0x7f) | ((addr << 1) & 0x7f00);
+}
+
+int read_ram1b1r_7p(int addr) {
+    return read_ram1b1r_8p(calc_7p(addr));
+}
+
+void write_ram1b1r_7p(int addr, int data) {
+    return write_ram1b1r_8p(calc_7p(addr), data);
+}
+
 int calc_8p_half_lr(int addr) {
     // Funkier: The column address starts at the MSB of the low (row) byte. So
     // we need to: shift column bits up by one; blat row byte's MSB; and then
@@ -156,32 +171,29 @@ void write_ram1b1r_8p_half_hr(int addr, int data)
 
 int calc_8p_half_lc(int addr)
 {
+    // Easy: Force the msb to 0 on the high byte - which is the column. 
     return addr & 0x7fff;
 }
 
 int read_ram1b1r_8p_half_lc(int addr)
 {
-    // Easy: Force the msb to 0 on the high byte - which is the column. 
     return read_ram1b1r_8p(calc_8p_half_lc(addr));
 }
 
 void write_ram1b1r_8p_half_lc(int addr, int data)
 {
-    // For 4164, addr = ccccccccrrrrrrrr.
-    // For 4132, addr =  cccccccrrrrrrrr.
-    // We need   addr = 0cccccccrrrrrrrr.
     write_ram1b1r_8p(calc_8p_half_lc(addr), data);
 }
 
 
 int calc_8p_half_hc (int addr)
 {
+    // Easy: Force the msb to 1 on the high byte - which is the column. 
     return (addr & 0xff) | ((addr & 0x7f00) | 0x8000);
 }
 
 int read_ram1b1r_8p_half_hc(int addr)
 {
-    // Easy: Force the msb to 1 on the high byte - which is the column. 
     return read_ram1b1r_8p(calc_8p_half_hc(addr));
 }
 

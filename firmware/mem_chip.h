@@ -31,6 +31,9 @@ extern PIO pio;
 extern uint sm;
 extern uint offset; // Returns offset of starting instruction
 
+extern int read_ram1b1r_7p(int addr);
+extern void write_ram1b1r_7p(int addr, int data);
+
 extern int read_ram1b1r_8p(int addr);
 extern int read_ram1b1r_8p_half_lr(int addr);
 extern int read_ram1b1r_8p_half_hr(int addr);
@@ -44,6 +47,5 @@ extern void write_ram1b1r_8p_half_lc(int addr, int data);
 extern void write_ram1b1r_8p_half_hc(int addr, int data);
 
 extern void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant);
-
 extern void ram1b1r_teardown_pio();
 #endif

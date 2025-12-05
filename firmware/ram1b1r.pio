@@ -1,7 +1,4 @@
-
-;
-; All 1 bit ram chips with a simgle RAS (64 kilobits or less)
-;
+; All 1 bit ram chips with a single RAS (64 kilobits or less)
 
 ; Pin Assignments
 ; SP0,  A0,  5,  output, out

@@ -21,7 +21,7 @@
 
 // Defined RAM pio programs
 #include "ram4116.pio.h"
-#include "ram4816.pio.h"
+#include "ram4816.h"
 #include "ram4132.pio.h"
 #include "ram4164.h"
 #include "ram41128.pio.h"

@@ -33,9 +33,7 @@ target_compile_definitions(pmemtest PRIVATE
 	PLL_SYS_POSTDIV2=1
 )
 
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4164.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4816.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41128.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41256.pio)
@@ -51,14 +49,21 @@ target_include_directories(pmemtest
 )
 
 target_sources(pmemtest PRIVATE
-    ram4164.c mem_chip.c pmemtest.c st7789.c gui.c pio_patcher.c xoroshiro64starstar.c
+    gui.c
+    mem_chip.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffsystem.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffunicode.c
+    pio_patcher.c
+    pmemtest.c
+    ram4164.c
+    ram4816.c
+    st7789.c
     submodules/pico-usb-flash-drive/flash.c
     submodules/pico-usb-flash-drive/fatfs_driver.c
 	submodules/pico-usb-flash-drive/usb_msc_driver.c
 	submodules/pico-usb-flash-drive/usb_descriptors.c
+    xoroshiro64starstar.c
 )
 
 target_link_libraries(pmemtest PRIVATE
