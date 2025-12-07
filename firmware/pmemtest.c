@@ -10,14 +10,10 @@
 #include "pico/multicore.h"
 #include "pico/util/queue.h"
 #include "hardware/pio.h"
-#include "hardware/vreg.h"
 #include "pio_patcher.h"
 #include "xoroshiro64starstar.h"
+#include "config.h"
 #include "mem_chip.h"
-#include <bsp/board.h>
-#include <tusb.h>
-#include <ff.h>
-#include <flash.h>
 
 // Defined RAM pio programs
 #include "ram4116.pio.h"
@@ -41,7 +37,6 @@
 #include "drum_icon3.h"
 
 #include "gui.h"
-
 
 #define GPIO_POWER 4
 #define GPIO_QUAD_A 22
@@ -498,7 +493,12 @@ bool drum_animation_cb(__unused struct repeating_timer *t)
 void show_test_gui()
 {
     uint16_t cx, cy;
-    paint_dialog("Testing...");
+
+    uint32_t sys_clk = get_system_overclock() / 1000000;
+    char title[30];
+    sprintf(title, "PIO@%dMHz Testing...", sys_clk);
+
+    paint_dialog(title);
 
     // Cell status area. 32x32 elements.
     fancy_rect(7, 31, 100, 100, B_SUNKEN_OUTER); // Usable size is 220x80.
@@ -792,19 +792,10 @@ void init_buttons_encoder()
 }
 
 int main() {
-    uint offset;
-    uint16_t addr;
-    uint8_t db = 0;
-    uint din = 0;
     int i, retval;
 
-    // Increase core voltage slightly (default is 1.1V) to better handle overclock
-    vreg_set_voltage(VREG_VOLTAGE_1_30);
-
-    // USB Mass storage initialization. Untested.
-    //board_init();
-    //tud_init(BOARD_TUD_RHPORT);
-    //stdio_init_all();
+    // Apply things like core voltage and overclock
+    do_system_config();
 
     // PLL->prim = 0x51000.
 
@@ -859,16 +850,13 @@ int main() {
         do_encoder();
         do_buttons();
         do_status();
-
-        // usb mass storage handler. untested.
-     //   tud_task();
     }
 
-    while(1) {
+    //while(1) {
 //        printf("Begin march test.\n");
-        retval = marchb_test(65536, 1);
+//        retval = marchb_test(65536, 1);
 //        printf("Rv: %d\n", retval);
-    }
+    //}
 
     return 0;
 }

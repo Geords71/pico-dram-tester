@@ -26,13 +26,6 @@ pico_sdk_init()
 
 add_executable(pmemtest)
 
-target_compile_definitions(pmemtest PRIVATE
-	PLL_SYS_REFDIV=1
-	PLL_SYS_VCO_FREQ_HZ=1500000000
-	PLL_SYS_POSTDIV1=5
-	PLL_SYS_POSTDIV2=1
-)
-
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41128.pio)
@@ -45,7 +38,6 @@ set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
 target_include_directories(pmemtest
     PRIVATE ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
 	${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive
-#	${CMAKE_CURRENT_LIST_DIR}
 )
 
 target_sources(pmemtest PRIVATE
@@ -63,6 +55,7 @@ target_sources(pmemtest PRIVATE
     submodules/pico-usb-flash-drive/fatfs_driver.c
 	submodules/pico-usb-flash-drive/usb_msc_driver.c
 	submodules/pico-usb-flash-drive/usb_descriptors.c
+    config.c
     xoroshiro64starstar.c
 )
 
@@ -80,5 +73,14 @@ target_link_libraries(pmemtest PRIVATE
 
 pico_enable_stdio_usb(pmemtest 1)
 pico_add_extra_outputs(pmemtest)
+
+add_custom_command(
+    TARGET pmemtest
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_CURRENT_LIST_DIR}/build/pmemtest.uf2"
+        "${CMAKE_CURRENT_LIST_DIR}/pmemtest.uf2"
+    COMMENT "Copying source_file.txt to target directory"
+)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
