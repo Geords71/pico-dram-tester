@@ -1,6 +1,9 @@
+#include <stdio.h>
 #include "mem_chip.h"
 #include "hardware/pio.h"
 #include "ram1b1r.pio.h"
+#include <ff.h>
+#include "shared_storage.h"
 
 PIO pio;
 uint sm = 0;
@@ -30,6 +33,33 @@ struct pio_program *get_patched_program(const struct pio_program *program, const
 
     patched_program.instructions = patched_instructions;
     return &patched_program;
+}
+
+void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET_COLS]) {
+
+    if (mount_shared_storage() != FR_OK) {
+        return;
+    }
+
+    char filename[12];
+    sprintf(filename, "%s.cfg", chip_name);
+
+    FIL fp;
+    bool result = f_open(&fp, filename, FA_READ);
+
+    if (result == FR_OK) {
+        uint8_t buffer[512];
+        UINT length;
+        f_gets(buffer, sizeof(buffer), &fp);
+        printf("%s", buffer);
+        f_close(&fp);
+        result = true;
+
+    } else {
+        printf("can't open %s: %d\n", filename, result);
+        result = false;
+    }
+    unmount_shared_storage();
 }
 
 void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant)

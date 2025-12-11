@@ -35,12 +35,13 @@ pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram1b1r.pio)
 
 set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
 
-target_include_directories(pmemtest
-    PRIVATE ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
-	${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive
+target_include_directories(pmemtest PRIVATE
+	${CMAKE_CURRENT_LIST_DIR}/shared_storage
+    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
 )
 
 target_sources(pmemtest PRIVATE
+    config.c
     gui.c
     mem_chip.c
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
@@ -50,12 +51,12 @@ target_sources(pmemtest PRIVATE
     pmemtest.c
     ram4164.c
     ram4816.c
+    shared_storage/fat_little_flash.c
+    shared_storage/pico_to_fat.c
+	shared_storage/tusb_to_fat.c
+    shared_storage/shared_storage.c
+	shared_storage/tusb_descriptors.c
     st7789.c
-    submodules/pico-usb-flash-drive/flash.c
-    submodules/pico-usb-flash-drive/fatfs_driver.c
-	submodules/pico-usb-flash-drive/usb_msc_driver.c
-	submodules/pico-usb-flash-drive/usb_descriptors.c
-    config.c
     xoroshiro64starstar.c
 )
 
@@ -80,7 +81,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_CURRENT_LIST_DIR}/build/pmemtest.uf2"
         "${CMAKE_CURRENT_LIST_DIR}/pmemtest.uf2"
-    COMMENT "Copying source_file.txt to target directory"
+    COMMENT "Copying uf2 to source directory"
 )
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
+#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 

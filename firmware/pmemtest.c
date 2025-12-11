@@ -15,6 +15,9 @@
 #include "config.h"
 #include "mem_chip.h"
 
+// Shared program and usb device file storage
+#include "shared_storage/shared_storage.h"
+
 // Defined RAM pio programs
 #include "ram4116.pio.h"
 #include "ram4816.h"
@@ -796,6 +799,7 @@ int main() {
 
     // Apply things like core voltage and overclock
     do_system_config();
+    init_shared_storage();
 
     // PLL->prim = 0x51000.
 
@@ -830,7 +834,6 @@ int main() {
     show_main_menu();
     init_buttons_encoder();
 
-
 // Testing
 #if 0
     power_on();
@@ -845,11 +848,11 @@ int main() {
     }
     while(1) {}
 #endif
-
     while(1) {
         do_encoder();
         do_buttons();
         do_status();
+        do_shared_storage();
     }
 
     //while(1) {

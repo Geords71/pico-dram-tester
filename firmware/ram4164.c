@@ -6,6 +6,7 @@
 
 #define RAM4164_DELAY_SET_ROWS 6
 
+
 static const uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
     {0,  0, 15, 3, 11,  4,  0,  0}, // 100ns - tested on km4164b-10 No margin applied yet...
     {0,  0, 14, 3, 15,  4,  0,  0}, // 120ns - tighter of all Mnfctr values and -10% margin applied
@@ -15,7 +16,9 @@ static const uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_CO
     {0, 20, 20, 9, 22, 27, 19,  1}  // 300ns
 };
 
+
 void ram4164_setup_pio(uint speed_grade, uint variant) {
+    get_ram1b1r_config("ram4164", ram4164_delays);
     ram1b1r_setup_pio(ram4164_delays[speed_grade], variant);
 }
 

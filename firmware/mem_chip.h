@@ -4,6 +4,7 @@
 #include "pico/types.h"
 #include "hardware/pio.h"
 #include "pio_patcher.h"
+#include "ram1b1r.pio.h"
 
 #define MEMCHIP_MAX_VARIANTS 8
 
@@ -48,4 +49,6 @@ extern void write_ram1b1r_8p_half_hc(int addr, int data);
 
 extern void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant);
 extern void ram1b1r_teardown_pio();
+
+extern void get_ram1b1r_config(char[], uint8_t[][RAM1B1R_DELAY_SET_COLS]);
 #endif
