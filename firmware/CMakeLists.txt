@@ -83,4 +83,4 @@ add_custom_command(
     COMMENT "Copying source_file.txt to target directory"
 )
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
+#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
