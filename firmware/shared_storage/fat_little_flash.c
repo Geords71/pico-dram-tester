@@ -1,4 +1,4 @@
-#include "fat_Little_flash.h"
+#include "fat_little_flash.h"
 #include "fat.h"
 #include "fat_image.h"
 #include <ctype.h>
