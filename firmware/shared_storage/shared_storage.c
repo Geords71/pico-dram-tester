@@ -3,6 +3,7 @@
 #include <tusb.h>
 #include <bsp/board.h>
 #include <ff.h>
+#include <logging.h>
 
 #define SS_MOUNT_POINT "/"
 static FATFS filesystem;
@@ -44,7 +45,7 @@ FRESULT mount_shared_storage() {
     int result = f_mount(&filesystem, SS_MOUNT_POINT, 1);
     if (result != FR_OK)
     {
-        printf("f_mount fail rc=%d\n", result);
+        ULOG_WARNING("f_mount fail rc=%d", result);
     } 
     return result;
 }

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ff.h> 
+#include <logging.h>
 #include "diskio.h"
 
 #include "fat.h"
@@ -49,7 +50,7 @@ DSTATUS disk_initialize(BYTE drv) {
         return Stat;
     }
 
-    printf("initialize flash FAT12\n");
+    ULOG_INFO("Initializing flash FAT12");
     fat_little_flash_initialize();
 
     Stat = RES_OK;

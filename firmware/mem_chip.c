@@ -4,6 +4,7 @@
 #include "ram1b1r.pio.h"
 #include <ff.h>
 #include "shared_storage.h"
+#include <logging.h>
 
 PIO pio;
 uint sm = 0;
@@ -51,12 +52,12 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
         uint8_t buffer[512];
         UINT length;
         f_gets(buffer, sizeof(buffer), &fp);
-        printf("%s", buffer);
+        ULOG_INFO("Read delay line: %s", buffer);
         f_close(&fp);
         result = true;
 
     } else {
-        printf("can't open %s: %d\n", filename, result);
+        ULOG_WARNING("can't open %s: %d", filename, result);
         result = false;
     }
     unmount_shared_storage();

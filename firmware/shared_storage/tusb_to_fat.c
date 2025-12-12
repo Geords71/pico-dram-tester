@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <bsp/board.h>
 #include <tusb.h>
+#include <logging.h>
 #include "fat_little_flash.h"
 
 #define  DISK_BLOCK_NUM  128
@@ -85,7 +86,7 @@ int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buff
     (void) lun;
     // out of ramdisk
     if (lba >= DISK_BLOCK_NUM) {
-        printf("read10 out of ramdisk: lba=%u\n", lba);
+        ULOG_INFO("read10 out of ramdisk: lba=%u", lba);
         return -1;
     }
     fat_little_flash_read(lba, buffer);
@@ -106,7 +107,7 @@ int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* 
     (void) lun;
     // out of ramdisk
     if (lba >= DISK_BLOCK_NUM) {
-        printf("write10 out of ramdisk: lba=%u\n", lba);
+        ULOG_INFO("write10 out of ramdisk: lba=%u", lba);
         return -1;
     }
 

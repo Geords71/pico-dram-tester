@@ -7,7 +7,7 @@
 #define RAM4164_DELAY_SET_ROWS 6
 
 
-static const uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
+static uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
     {0,  0, 15, 3, 11,  4,  0,  0}, // 100ns - tested on km4164b-10 No margin applied yet...
     {0,  0, 14, 3, 15,  4,  0,  0}, // 120ns - tighter of all Mnfctr values and -10% margin applied
     {0,  0, 18, 4, 20,  4,  0,  0}, // 150ns - tighter of all Mnfctr values and -15% margin applied

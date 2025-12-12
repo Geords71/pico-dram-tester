@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <logging.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "pico/util/queue.h"
@@ -528,14 +529,16 @@ void start_the_ram_test()
     // Get the power turned on
     power_on();
 
+    const mem_chip_t *chip = chip_list[main_menu.sel_line];
+    uint8_t speed_grade = speed_menu.sel_line;
+
+    ULOG_INFO("Testing %s chip at %s...", chip->chip_name, speed_menu.items[speed_grade]);
+
     // Get the PIO going
-    chip_list[main_menu.sel_line]->setup_pio(speed_menu.sel_line, variants_menu.sel_line);
+    chip->setup_pio(speed_grade, variants_menu.sel_line);
 
     // Dispatch the second core
-    // (The memory size is from our memory description data structure)
-    queue_entry_t entry = {all_ram_tests,
-                           chip_list[main_menu.sel_line]->mem_size,
-                           chip_list[main_menu.sel_line]->bits};
+    queue_entry_t entry = {all_ram_tests, chip->mem_size, chip->bits};
     queue_add_blocking(&call_queue, &entry);
 }
 
@@ -798,8 +801,10 @@ int main() {
     int i, retval;
 
     // Apply things like core voltage and overclock
+    init_logging();
     do_system_config();
     init_shared_storage();
+    stdio_usb_init();
 
     // PLL->prim = 0x51000.
 
@@ -856,9 +861,9 @@ int main() {
     }
 
     //while(1) {
-//        printf("Begin march test.\n");
+//        ULOG_INFO("Begin march test.");
 //        retval = marchb_test(65536, 1);
-//        printf("Rv: %d\n", retval);
+//        ULOG_INFO("Rv: %d", retval);
     //}
 
     return 0;
