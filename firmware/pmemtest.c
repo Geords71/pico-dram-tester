@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <tusb.h>
 #include <logging.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
@@ -798,12 +799,25 @@ void init_buttons_encoder()
 }
 
 int main() {
-    int i, retval;
+    init_logging();
+    ULOG_INFO("Configured logging...");
 
     // Apply things like core voltage and overclock
-    init_logging();
+    ULOG_INFO("Configuring Core System Settings...");
     do_system_config();
-    init_shared_storage();
+
+    // We must do this to prevent tusb from messing with lcd display later.
+    ULOG_INFO("Configuring UART...");
+    static uart_inst_t *uart_inst;
+    uart_inst = uart_get_instance(0);
+    stdio_uart_init_full(uart_inst, 57600, 0, 1);
+
+    ULOG_INFO("Configuring TinyUSB...");
+    tud_init(BOARD_TUD_RHPORT);
+
+    // This allows us to get stdout in a terminal or serial monitor.
+    // Works well with VSCode's Serial Monitor plugin.
+    ULOG_INFO("Configuring USB Serial STDOUT...");
     stdio_usb_init();
 
     // PLL->prim = 0x51000.
@@ -814,16 +828,20 @@ int main() {
     //gpio_set_dir(15, GPIO_OUT);
     //printf("Test.\n");
 
+    ULOG_INFO("Configuring Psuedorandom Seeds...");
     psrand_init_seeds();
 
+    ULOG_INFO("Lighting LED...");
     gpio_init(GPIO_LED);
     gpio_set_dir(GPIO_LED, GPIO_OUT);
     gpio_put(GPIO_LED, 1);
 
+    ULOG_INFO("Configuring GPIO Power and turning it off...");
     gpio_init(GPIO_POWER);
     power_off();
 
     // Set up second core
+    ULOG_INFO("Setting up second ARM core (to run chip tests)...");
     queue_init(&call_queue, sizeof(queue_entry_t), 2);
     queue_init(&results_queue, sizeof(int32_t), 2);
     queue_init(&stat_cur_test, sizeof(int), 2);
@@ -831,40 +849,44 @@ int main() {
     // Second core will wait for the call queue.
     multicore_launch_core1(core1_entry);
 
+    ULOG_INFO("Initializing display...");
     // Init display
     st7789_init();
 
+    ULOG_INFO("Initiliazing Main Menu...");
     setup_main_menu();
  //   gui_demo();
     show_main_menu();
+    
+
+    ULOG_INFO("Activating Knobs and Buttons...");
     init_buttons_encoder();
+
+    ULOG_INFO("Pico DRAM Tester Reporting for Duty!");
 
 // Testing
 #if 0
     power_on();
     ram44256_setup_pio(5);
     sleep_ms(10);
-    for (i=0; i < 100; i++) {
+    for (int i=0; i < 100; i++) {
         ram44256_ram_read(i&7);
         ram44256_ram_write(i&7, 1);
         ram44256_ram_read(i&7);
         ram44256_ram_write(i&7, 0);
-//gpio_put(GPIO_LED, marchb_test(8, 1));
+        //gpio_put(GPIO_LED, marchb_test(8, 1));
     }
     while(1) {}
 #endif
+
+    ULOG_INFO("Entering Main Program Loop...");
     while(1) {
         do_encoder();
         do_buttons();
         do_status();
-        do_shared_storage();
+        flush_logging();
+        tud_task();
     }
-
-    //while(1) {
-//        ULOG_INFO("Begin march test.");
-//        retval = marchb_test(65536, 1);
-//        ULOG_INFO("Rv: %d", retval);
-    //}
 
     return 0;
 }

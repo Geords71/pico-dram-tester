@@ -24,6 +24,17 @@ project(pmemtest)
 
 pico_sdk_init()
 
+# Wrap FatFs into a proper target
+add_library(fatfs
+    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
+    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffsystem.c
+    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffunicode.c
+)
+target_include_directories(fatfs PUBLIC
+    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
+)
+
+
 add_executable(pmemtest)
 
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)
@@ -38,7 +49,6 @@ set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
 target_include_directories(pmemtest PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/shared_storage
 	${CMAKE_CURRENT_LIST_DIR}/logging
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
 )
 
 target_sources(pmemtest PRIVATE
@@ -47,9 +57,6 @@ target_sources(pmemtest PRIVATE
     logging/ulog.c
     logging/logging.c
     mem_chip.c
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffsystem.c
-    ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ffunicode.c
     pio_patcher.c
     pmemtest.c
     ram4164.c
@@ -68,14 +75,14 @@ target_link_libraries(pmemtest PRIVATE
     pico_multicore
     hardware_pio
     hardware_spi
-    tinyusb_additions
-    tinyusb_board
     tinyusb_device
+    fatfs
     hardware_flash
     hardware_sync
 )
 
 pico_enable_stdio_usb(pmemtest 1)
+
 pico_add_extra_outputs(pmemtest)
 
 add_custom_command(

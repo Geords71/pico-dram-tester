@@ -4,5 +4,5 @@
 #include "ulog.h"
 
 void init_logging();
-
+void flush_logging();
 #endif

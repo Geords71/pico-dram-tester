@@ -1,7 +1,6 @@
 
 // TinyUSB
-#include <tusb.h>
-#include <bsp/board.h>
+#include <stdio.h>
 #include <ff.h>
 #include <logging.h>
 
@@ -52,15 +51,4 @@ FRESULT mount_shared_storage() {
 
 void unmount_shared_storage() {
     f_unmount(SS_MOUNT_POINT);
-}
-
-void init_shared_storage () {
-    // Get TinyUSB going.
-    board_init();
-    tusb_init();
-}
-
-void do_shared_storage() {
-    // Perform routine handling of tusb device events.
-    tud_task();
 }

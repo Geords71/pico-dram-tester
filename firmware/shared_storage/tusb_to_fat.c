@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <ctype.h>
-#include <bsp/board.h>
 #include <tusb.h>
 #include <logging.h>
 #include "fat_little_flash.h"
