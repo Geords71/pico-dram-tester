@@ -1,5 +1,5 @@
 # == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
+if(CMAKE_HOST_WIN32)
     set(USERHOME $ENV{USERPROFILE})
 else()
     set(USERHOME $ENV{HOME})
@@ -18,11 +18,14 @@ set(PICO_PLATFORM rp2350 CACHE STRING "Platform")
 
 # Initialize pico-sdk from submodule
 # note: this must happen before project()
-include(pico_sdk_import.cmake)
+include(cmake_include/pico_sdk_import.cmake)
+
+include(cmake_include/virtualenv_create.cmake)
 
 project(pmemtest)
 
 pico_sdk_init()
+
 
 # Wrap FatFs into a proper target
 add_library(fatfs
@@ -34,8 +37,16 @@ target_include_directories(fatfs PUBLIC
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source
 )
 
+# Define a target that runs the script
+add_custom_target(build_fat_image
+    COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/scripts/generate_fat_header.py
+        --input-dir="${CMAKE_CURRENT_LIST_DIR}/fat_files"
+        --output-file="${CMAKE_CURRENT_LIST_DIR}/build/fat_image_new.h"
+    COMMENT "Generating FAT Filesystem C Header"
+)
 
 add_executable(pmemtest)
+add_dependencies (pmemtest build_fat_image)
 
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
@@ -94,4 +105,4 @@ add_custom_command(
     COMMENT "Copying uf2 to source directory"
 )
 
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 

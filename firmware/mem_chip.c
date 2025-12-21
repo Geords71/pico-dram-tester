@@ -43,7 +43,7 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
     }
 
     char filename[12];
-    sprintf(filename, "%s.cfg", chip_name);
+    sprintf(filename, "%s.csv", chip_name);
 
     FIL fp;
     bool result = f_open(&fp, filename, FA_READ);
@@ -57,7 +57,7 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
         result = true;
 
     } else {
-        ULOG_WARNING("can't open %s: %d", filename, result);
+        ULOG_WARNING("Can't open %s. Using hard-coded defaults: %d", filename, result);
         result = false;
     }
     unmount_shared_storage();
@@ -67,13 +67,9 @@ void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant)
 {
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
-        get_patched_program(&ram1b1r_program, delay_set, RAM1B1R_DELAY_SET_COLS),
-        &pio,
-        &sm,
-        &offset,
-        pin,
-        17,
-        true
+        get_patched_program(
+            &ram1b1r_program, delay_set, RAM1B1R_DELAY_SET_COLS),
+        &pio, &sm, &offset, pin, 17, true
     );
 
     // Set up 17 total pins

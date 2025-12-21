@@ -800,7 +800,7 @@ void init_buttons_encoder()
 
 int main() {
     init_logging();
-    ULOG_INFO("Configured logging...");
+    ULOG_INFO("Configured Logging...");
 
     // Apply things like core voltage and overclock
     ULOG_INFO("Configuring Core System Settings...");
@@ -840,6 +840,10 @@ int main() {
     gpio_init(GPIO_POWER);
     power_off();
 
+
+    ULOG_INFO("Configuring fat storage...");
+
+
     // Set up second core
     ULOG_INFO("Setting up second ARM core (to run chip tests)...");
     queue_init(&call_queue, sizeof(queue_entry_t), 2);
@@ -849,11 +853,11 @@ int main() {
     // Second core will wait for the call queue.
     multicore_launch_core1(core1_entry);
 
-    ULOG_INFO("Initializing display...");
+    ULOG_INFO("Initializing LCD Display...");
     // Init display
     st7789_init();
 
-    ULOG_INFO("Initiliazing Main Menu...");
+    ULOG_INFO("Initializing Main Menu...");
     setup_main_menu();
  //   gui_demo();
     show_main_menu();
@@ -862,7 +866,7 @@ int main() {
     ULOG_INFO("Activating Knobs and Buttons...");
     init_buttons_encoder();
 
-    ULOG_INFO("Pico DRAM Tester Reporting for Duty!");
+    ULOG_INFO("Pico DRAM Tester reporting for duty!");
 
 // Testing
 #if 0
