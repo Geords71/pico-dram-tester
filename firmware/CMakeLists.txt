@@ -83,13 +83,12 @@ target_sources(pmemtest PRIVATE
 
 target_link_libraries(pmemtest PRIVATE
     pico_stdlib
+    pico_flash
     pico_multicore
     hardware_pio
     hardware_spi
     tinyusb_device
     fatfs
-    hardware_flash
-    hardware_sync
 )
 
 pico_enable_stdio_usb(pmemtest 1)
@@ -105,4 +104,4 @@ add_custom_command(
     COMMENT "Copying uf2 to source directory"
 )
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 
+#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/submodules/pico-usb-flash-drive) 

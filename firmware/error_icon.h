@@ -1,3 +1,5 @@
+#ifndef _ERROR_ICON_H
+#define _ERROR_ICON_H
 // Image: 32 x 32
 uint16_t error_icon_palette[] = { 0x000F, 0x001F, 0x7BEF, 0xFFFF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
 
@@ -72,3 +74,4 @@ const uint8_t error_icon_mask[] = {
 };
 
 const ico_def_t error_icon = { 32, 32, error_icon_palette, error_icon_image, error_icon_mask };
+#endif

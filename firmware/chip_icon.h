@@ -1,3 +1,5 @@
+#ifndef _CHIP_ICON_H
+#define _CHIP_ICON_H
 // Image: 32 x 32
 uint16_t chip_icon_palette[] = { 0x0000, 0x8410, 0xC618, 0xFFFF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
 
@@ -72,3 +74,4 @@ const uint8_t chip_icon_mask[] = {
 };
 
 const ico_def_t chip_icon = { 32, 32, chip_icon_palette, chip_icon_image, chip_icon_mask };
+#endif

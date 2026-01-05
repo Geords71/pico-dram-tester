@@ -1,3 +1,5 @@
+#ifndef _DRUM_ICON2_H
+#define _DRUM_ICON2_H
 // Image: 32 x 32
 uint16_t drum_icon2_palette[] = { 0x0000, 0x0010, 0x001F, 0x0410, 0x8410, 0xC618, 0x07FF, 0xFFFF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
 
@@ -72,3 +74,4 @@ const uint8_t drum_icon2_mask[] = {
 };
 
 const ico_def_t drum_icon2 = { 32, 32, drum_icon2_palette, drum_icon2_image, drum_icon2_mask };
+#endif

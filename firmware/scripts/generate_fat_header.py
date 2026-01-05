@@ -6,6 +6,7 @@ from os import path
 from pyfatfs.PyFat import PyFat
 import fs
 from fs.osfs import OSFS
+import string
 
 IMAGE_SIZE_BYTES = 1024 * 64
 
@@ -67,12 +68,19 @@ def convert_image_to_header(image_path, output_file, name):
 
     with open(output_file, "w") as f:
         f.write(f"#ifndef {name.upper()}_H\n#define {name.upper()}_H\n\n")
-        f.write(f"const unsigned char {name}_data[] = {{\n    ")
+        f.write(f"#include <stdint.h>\n\n")
+        f.write(f"const uint8_t {name}_data[{len(data)}] = {{\n")
         
         for i, byte in enumerate(data):
-            f.write(f"0x{byte:02x}, ")
-            if (i + 1) % 12 == 0:  # New line every 12 bytes for readability
-                f.write("\n    ")
+            if i % 16 == 0:  # New line every 16 bytes for readability
+                f.write(f"/* {i:08x} */  ")
+            char = chr(byte)
+            if 31 < byte < 127:
+                f.write(f"'{char}',  ")
+            else:
+                f.write(f"0x{byte:02x}, ")
+            if (i + 1) % 16 == 0:  # New line every 16 bytes for readability
+                f.write(f"\n")
                 
         f.write(f"\n}};\n\nunsigned int {name}_len = {len(data)};\n")
         f.write("#endif")

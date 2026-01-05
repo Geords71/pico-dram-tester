@@ -1,5 +1,5 @@
-#ifndef UI_H
-#define UI_H
+#ifndef _GUI_H
+#define _GUI_H
 
 // A few colors
 #define COLOR_BLACK 0x0000

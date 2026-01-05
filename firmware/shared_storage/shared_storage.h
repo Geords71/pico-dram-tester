@@ -1,5 +1,5 @@
-#ifndef _SHARED_STORAGE_H_
-#define _SHARED_STORAGE_H_
+#ifndef _SHARED_STORAGE_H
+#define _SHARED_STORAGE_H
 
 #include <ff.h>
 

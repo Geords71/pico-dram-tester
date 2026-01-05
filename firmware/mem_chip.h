@@ -1,5 +1,5 @@
-#ifndef MEMCHIP_H
-#define MEMCHIP_H
+#ifndef _MEMCHIP_H
+#define _MEMCHIP_H
 #include <stdint.h>
 #include "pico/types.h"
 #include "hardware/pio.h"

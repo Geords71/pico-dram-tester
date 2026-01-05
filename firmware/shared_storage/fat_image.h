@@ -1,7 +1,10 @@
-#include <stdint.h>
-#include "fat.h"
+#ifndef _FAT_IMAGE_H
+#define _FAT_IMAGE_H
 
-#define DEFAULT_CONTENTS  "Hello Host!\n"
+#include <stdint.h>
+#include "fat_little_flash.h"
+
+#define DEFAULT_CONTENTS  "led_on=true\nenc_debounce_count=1000\n"
 
 uint8_t disk_image[4][FAT_BLOCK_SIZE] =
 {
@@ -67,11 +70,13 @@ uint8_t disk_image[4][FAT_BLOCK_SIZE] =
       'P' , 'I' , 'C' , 'O' , '_' , 'F' , 'S' , ' ' , ' ' , ' ' , ' ' , 0x08, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4F, 0x6D, 0x65, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       // second entry is readme file
-      'R' , 'E' , 'A' , 'D' , 'M' , 'E' , ' ' , ' ' , 'T' , 'X' , 'T' , 0x20, 0x00, 0xC6, 0x52, 0x6D,
+      'S' , 'Y' , 'S' , 'T' , 'E' , 'M' , ' ' , ' ' , 'C' , 'F' , 'G' , 0x20, 0x00, 0xC6, 0x52, 0x6D,
       0x65, 0x43, 0x65, 0x43, 0x00, 0x00, 0x88, 0x6D, 0x65, 0x43, 0x02, 0x00,
       sizeof(DEFAULT_CONTENTS) - 1, 0x00, 0x00, 0x00 // readme's files size
   },
 
-  //------------- Block3: Readme Content -------------//
+  //------------- Block3: SYSTEM.CFG Content -------------//
   { DEFAULT_CONTENTS },
 };
+
+#endif
