@@ -71,7 +71,7 @@ static bool parse_bool(const char* key, const char* value, void* out) {
 
     if (good_val) 
     {
-        ULOG_INFO("app_config.%s has been set to %s.", key, *p ? true : false);
+        ULOG_INFO("app_config.%s has been set to %s.", key, (*p ? "true" : "false"));
     }
 
     return good_val;
