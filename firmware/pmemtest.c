@@ -6,19 +6,21 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <tusb.h>
-#include <logging.h>
-#include "pico/stdlib.h"
-#include "pico/multicore.h"
-#include "pico/util/queue.h"
-#include "hardware/pio.h"
+#include <hardware/pio.h>
 #include "pio_patcher.h"
-#include "xoroshiro64starstar.h"
+#include "logging/logging.h"
 #include "config.h"
 #include "mem_chip.h"
+#include "xoroshiro64starstar.h"
+#include <pico/stdlib.h>
+#include <pico/flash.h>
+#include <pico/multicore.h>
+#include <pico/util/queue.h>
+#include <tusb.h>
 
 // Shared program and usb device file storage
-#include "shared_storage/shared_storage.h"
+#include "config.h"
+#include "shared_storage/fat_little_flash.h"
 
 // Defined RAM pio programs
 #include "ram4116.pio.h"
@@ -111,6 +113,8 @@ queue_t results_queue;
 // Entry point for second core. This is just a generic
 // function dispatcher lifted from the Raspberry Pi example code.
 void core1_entry() {
+    flash_safe_execute_core_init();
+    //multicore_lockout_victim_init();
     while (1) {
         // Function pointer is passed to us via the queue_entry_t which also
         // contains the function parameter.
@@ -395,7 +399,6 @@ typedef struct {
     uint32_t hcount;
 } pin_debounce_t;
 
-#define ENC_DEBOUNCE_COUNT 1000
 #define BUTTON_DEBOUNCE_COUNT 50000
 
 // Debounces a pin
@@ -403,11 +406,11 @@ uint8_t do_debounce(pin_debounce_t *d)
 {
     if (gpio_get(d->pin)) {
         d->hcount++;
-        if (d->hcount > ENC_DEBOUNCE_COUNT) d->hcount = ENC_DEBOUNCE_COUNT;
+        if (d->hcount > app_config.enc_debounce_count) d->hcount = app_config.enc_debounce_count;
     } else {
         d->hcount = 0;
     }
-    return (d->hcount >= ENC_DEBOUNCE_COUNT) ? 1 : 0;
+    return (d->hcount >= app_config.enc_debounce_count) ? 1 : 0;
 }
 
 // Returns true only *once* when a button is pushed. No key repeat.
@@ -798,6 +801,7 @@ void init_buttons_encoder()
 
 }
 
+
 int main() {
     init_logging();
     ULOG_INFO("Configured Logging...");
@@ -805,6 +809,10 @@ int main() {
     // Apply things like core voltage and overclock
     ULOG_INFO("Configuring Core System Settings...");
     do_system_config();
+
+    fat_little_flash_initialize();
+
+    load_app_config();
 
     // We must do this to prevent tusb from messing with lcd display later.
     ULOG_INFO("Configuring UART...");
@@ -831,18 +839,24 @@ int main() {
     ULOG_INFO("Configuring Psuedorandom Seeds...");
     psrand_init_seeds();
 
-    ULOG_INFO("Lighting LED...");
     gpio_init(GPIO_LED);
     gpio_set_dir(GPIO_LED, GPIO_OUT);
-    gpio_put(GPIO_LED, 1);
+
+    if(app_config.led_on)
+    {
+        ULOG_INFO("Lighting LED...");
+        gpio_put(GPIO_LED, 1);
+    } else {
+
+        ULOG_INFO("Not lighting LED...");
+        gpio_put(GPIO_LED, 0);
+    }
 
     ULOG_INFO("Configuring GPIO Power and turning it off...");
     gpio_init(GPIO_POWER);
     power_off();
 
-
     ULOG_INFO("Configuring fat storage...");
-
 
     // Set up second core
     ULOG_INFO("Setting up second ARM core (to run chip tests)...");

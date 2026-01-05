@@ -1,3 +1,9 @@
+#ifndef _SSERIF20_H
+#define _SSERIF20_H
+
+#include <stdint.h>
+#include "st7789.h"
+
 // Font size: 12
 // Pixel height: 20
 const uint8_t sserif20_widths[] = {
@@ -472,3 +478,5 @@ const uint8_t sserif20_data[] = {
 0x00,0x00,0x00,0x00,0x22,0x00,0x00,0x41,0x41,0x22,0x22,0x14,0x14,0x08,0x08,0x04,
 0x04,0x02,0x02,0x01 };
 const font_def_t sserif20 = { 256, 20, sserif20_widths, sserif20_offsets, sserif20_data };
+
+#endif

@@ -4,55 +4,15 @@
 #include <ff.h> 
 #include <logging.h>
 #include "diskio.h"
-
-#include "fat.h"
 #include "fat_little_flash.h"
 
-#define FAT_MAGIC  (0x55AA)
-
 static DSTATUS Stat = RES_OK; // STA_NOINIT;
-
-typedef struct {
-  uint8_t DIR_Name[11];
-  uint8_t DIR_Attr;
-  uint8_t DIR_NTRes;
-  uint8_t DIR_CrtTimeTenth;
-  uint16_t DIR_CrtTime;
-  uint16_t DIR_CrtDate;
-  uint16_t DIR_LstAccDate;
-  uint16_t DIR_FstClusHI;
-  uint16_t DIR_WrtTime;
-  uint16_t DIR_WrtDate;
-  uint16_t DIR_FstClusLO;
-  uint32_t DIR_FileSize;
-} fat_dir_entry_t;
-
 
 DSTATUS disk_status(BYTE drv) {
     return Stat;
 }
 
 DSTATUS disk_initialize(BYTE drv) {
-    uint8_t block[FAT_BLOCK_SIZE];
-    fat_little_flash_read(0, block);
-
-    uint16_t magic = block[FAT_BLOCK_SIZE - 2] << 8 | block[FAT_BLOCK_SIZE - 1];
-    if (magic == FAT_MAGIC) {
-        Stat = RES_OK;
-        return Stat;
-    }
-
-    fat_little_flash_read(2, block);
-    fat_dir_entry_t *dir = (fat_dir_entry_t *)block;
-    dir++;
-    if (strcmp(dir->DIR_Name, "README  TXT") == 0) {
-        Stat = RES_OK;
-        return Stat;
-    }
-
-    ULOG_INFO("Initializing flash FAT12");
-    fat_little_flash_initialize();
-
     Stat = RES_OK;
     return Stat;
 }

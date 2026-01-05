@@ -1,3 +1,5 @@
+#ifndef _CHECK_ICON_H
+#define _CHECK_ICON_H
 // Image: 32 x 32
 uint16_t check_icon_palette[] = { 0x8000, 0x0400, 0x8410, 0x07E0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
 
@@ -72,3 +74,4 @@ const uint8_t check_icon_mask[] = {
 };
 
 const ico_def_t check_icon = { 32, 32, check_icon_palette, check_icon_image, check_icon_mask };
+#endif
