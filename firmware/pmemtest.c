@@ -801,7 +801,6 @@ void init_buttons_encoder()
 
 }
 
-
 int main() {
     init_logging();
     ULOG_INFO("Configured Logging...");
@@ -810,8 +809,10 @@ int main() {
     ULOG_INFO("Configuring Core System Settings...");
     do_system_config();
 
+    ULOG_INFO("Initializing Flash Storage...");
     fat_little_flash_initialize();
 
+    ULOG_INFO("Loading Application Config from Flash Storage...");
     load_app_config();
 
     // We must do this to prevent tusb from messing with lcd display later.
@@ -855,8 +856,6 @@ int main() {
     ULOG_INFO("Configuring GPIO Power and turning it off...");
     gpio_init(GPIO_POWER);
     power_off();
-
-    ULOG_INFO("Configuring fat storage...");
 
     // Set up second core
     ULOG_INFO("Setting up second ARM core (to run chip tests)...");

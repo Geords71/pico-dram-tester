@@ -46,6 +46,12 @@ add_custom_target(build_fat_image
 )
 
 add_executable(pmemtest)
+
+# Help with overclock XIP abd flash writes.
+target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    PICO_FLASH_SPI_CLKDIV=4
+)
+
 add_dependencies (pmemtest build_fat_image)
 
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)

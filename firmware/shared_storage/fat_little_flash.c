@@ -1,6 +1,6 @@
 #include "fat_little_flash.h"
-//#include "fat_image_new.h"
-#include "fat_image.h"
+#include "fat_image_new.h"
+//#include "fat_image.h"
 #include <ctype.h>
 #include <math.h>
 #include <pico/flash.h>
@@ -17,7 +17,54 @@
 
 #define FLASH_FAT_BLOCK_SIZE   4096
 #define FLASH_FAT_OFFSET       0x1F0000
-#define FAT_MAGIC  (0x55AA)
+#define XIP_FAT_OFFSET (XIP_BASE + FLASH_FAT_OFFSET)
+#define FAT12_BOOT_SIGNATURE  (0xAA55)
+
+// As-is, where-is!
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t  jmp[3];
+    char     oem_name[8];
+    uint16_t bytes_per_sector;
+    uint8_t  sectors_per_cluster;
+    uint16_t reserved_sectors;
+    uint8_t  fat_count;
+    uint16_t root_entries;
+    uint16_t total_sectors_small;
+    uint8_t  media_descriptor;
+    uint16_t sectors_per_fat;
+    uint16_t sectors_per_track;
+    uint16_t head_count;
+    uint32_t hidden_sectors;
+    uint32_t total_sectors_large;
+    
+    // Extended BPB (FAT12/16)
+    uint8_t  drive_number;
+    uint8_t  reserved;
+    uint8_t  signature;
+    uint32_t volume_id;
+    char     volume_label[11];
+    char     system_id[8];
+    
+    uint8_t  boot_code[448];
+    uint16_t boot_signature;
+} fat_boot_sector_t;
+
+typedef struct {
+  uint8_t name[11];
+  uint8_t attr;
+  uint8_t nt_res;
+  uint8_t crt_time_tenth;
+  uint16_t crt_time;
+  uint16_t crt_date;
+  uint16_t lst_acc_date;
+  uint16_t fst_clus_hi;
+  uint16_t wrt_time;
+  uint16_t wrt_date;
+  uint16_t fst_clus_lo;
+  uint32_t file_size;
+} fat_dir_entry_t;
+#pragma pack(pop)
 
 typedef struct {
     // define parameters needed for safe write
@@ -32,44 +79,75 @@ void write_flash(void *write_params) {
     flash_range_program(wp->flash_offs, wp->data, wp->count);
 }
 
-void fat_little_flash_reflash() {
-    
-    // flash_safe_execute(write_flash, (void *)&write_params, 1000);
-    flash_range_erase(FLASH_FAT_OFFSET, FLASH_SECTOR_SIZE * 16);
-    flash_range_program(FLASH_FAT_OFFSET, (uint8_t *)disk_image, sizeof(disk_image));
+static uint8_t staging_buf[FLASH_SECTOR_SIZE];
 
-    ULOG_INFO("Flash FAT12 Filesystem restored.");
+void __not_in_flash_func(fat_little_flash_reflash)(void) {
+    uint32_t irq_state = save_and_disable_interrupts();
+
+    flash_range_erase(FLASH_FAT_OFFSET, fat_image_new_len);
+
+    for(uint32_t chunk_offset = 0; chunk_offset < fat_image_new_len; chunk_offset += FLASH_SECTOR_SIZE) {
+        uint8_t *src  = (uint8_t *)fat_image_new_data + chunk_offset;
+        uint32_t write_addr = FLASH_FAT_OFFSET + chunk_offset;
+
+        memcpy(staging_buf, src, FLASH_SECTOR_SIZE);
+        flash_range_program(write_addr, staging_buf, FLASH_SECTOR_SIZE);
+    }
+
+    restore_interrupts(irq_state);
 }
 
 void fat_little_flash_initialize(void) {
-    uint8_t buffer[FAT_BLOCK_SIZE];
-    fat_little_flash_read(0, buffer);
+    fat_boot_sector_t *boot_sector = (fat_boot_sector_t *)(XIP_FAT_OFFSET);
 
     ULOG_INFO("Checking FAT Filesystem...");
-    uint16_t magic = buffer[FAT_BLOCK_SIZE - 2] << 8 | buffer[FAT_BLOCK_SIZE - 1];
-    if (magic != FAT_MAGIC) {
-        ULOG_INFO("Valid FAT Filesystem missing: Initializing Flash FAT12");
+    if (boot_sector->boot_signature != FAT12_BOOT_SIGNATURE) {
+        ULOG_INFO("Valid FAT12 signature missing: expecting 0x%x but found 0x%x.", FAT12_BOOT_SIGNATURE, boot_sector->boot_signature);
+        ULOG_INFO("Initializing Flash FAT12...");
         fat_little_flash_reflash();
-    }
-
-    ULOG_INFO("Valid FAT Filesystem Found.");
-    fat_little_flash_read(2, buffer);
-    fat_dir_entry_t *dir = (fat_dir_entry_t *)buffer;
-    dir++;
-
-    int8_t size = sizeof(dir->DIR_Name) + 1;
-    char dir_name[size];
-    snprintf(dir_name, size, "%.*s", size-1, dir->DIR_Name);
-    
-    ULOG_INFO("Checking for SYSTEM.CFG...");
-    //ULOG_INFO("[%s]", dir_name);
-    if (strcmp(dir_name, "SYSTEM  CFG") == 0) {
-        ULOG_INFO("SYSTEM.CFG found.");
+        ULOG_INFO("Flash FAT12 Filesystem restored.");
         return;
     }
 
-    ULOG_INFO("SYSTEM.CFG missing: Initializing Flash FAT12");
+    ULOG_INFO("Valid FAT Filesystem Signature Found.");
+    ULOG_INFO("Checking for SYSTEM.CFG...");
+    ULOG_INFO("Fat 12 Filesystem has root file limit of %d.", boot_sector->root_entries);
+    uint32_t root_dir_offset = boot_sector->bytes_per_sector * (boot_sector->reserved_sectors +
+        (boot_sector->fat_count * boot_sector->sectors_per_fat));
+
+    ULOG_INFO("Fat 12 Filesystem root dir starts at 0x%x.", root_dir_offset);
+    fat_dir_entry_t *dir = (fat_dir_entry_t *)(XIP_FAT_OFFSET + root_dir_offset);
+
+    static int8_t dir_name_size = sizeof(dir->name);
+    char dir_name[dir_name_size + 1];
+
+    for (uint8_t i = 0; i < boot_sector->root_entries; i++) {
+        if (dir->name[0] == 0) break;        // No more entries
+
+        if (dir->name[0] == 0xE5 || // Deleted entry
+            dir->attr == 0x0F    || // Long File Name entry
+            dir->attr & 0x08)       // Volume label
+        {
+            dir++;
+            continue;
+        }
+
+        memcpy(dir_name, dir->name, dir_name_size);
+        dir_name[dir_name_size] = '\0';
+
+        ULOG_INFO("%s", dir_name);
+
+        if (strcmp(dir_name, "SYSTEM  CFG") == 0) {
+            ULOG_INFO("SYSTEM.CFG found. Filesystem is OK.");
+            return;
+        }
+        dir++;
+    }
+
+    // If we got here system.cfg is missing so reflash.
+    ULOG_INFO("SYSTEM.CFG missing: Initializing Flash FAT12...");
     fat_little_flash_reflash();
+    ULOG_INFO("Flash FAT12 Filesystem restored.");
     return;
 }
 
