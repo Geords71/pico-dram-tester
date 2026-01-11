@@ -11,7 +11,7 @@ by deleting SYSTEM.CFG and powercycling the board.
 
 ## Known Limitations
 
-### THERE IS CURRENTLY NO WEAR LEVELING SUPPORT
+### THERE IS CURRENTLY NO WEAR LEVELLING SUPPORT
 
 So please don't use this drive for anything other than storing configuration
 files, yet. And maybe avoid having any files open for too long on your host OS.

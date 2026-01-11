@@ -75,7 +75,7 @@ def convert_image_to_header(image_path, output_file, name):
             if i % 16 == 0:  # New line every 16 bytes for readability
                 f.write(f"/* {i:08x} */  ")
             char = chr(byte)
-            if 31 < byte < 127 and byte != 92:
+            if 31 < byte < 127 and byte not in [92, 39]:
                 f.write(f"'{char}',  ")
             else:
                 f.write(f"0x{byte:02x}, ")
