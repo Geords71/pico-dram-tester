@@ -401,8 +401,9 @@ typedef struct {
 
 #define BUTTON_DEBOUNCE_COUNT 50000
 
+// TODO: Remove this block if the new do_encoder method stands test of time.
 // Debounces a pin
-uint8_t do_debounce(pin_debounce_t *d)
+/*uint8_t do_debounce(pin_debounce_t *d)
 {
     if (gpio_get(d->pin)) {
         d->hcount++;
@@ -412,6 +413,7 @@ uint8_t do_debounce(pin_debounce_t *d)
     }
     return (d->hcount >= app_config.enc_debounce_count) ? 1 : 0;
 }
+*/
 
 // Returns true only *once* when a button is pushed. No key repeat.
 bool is_button_pushed(pin_debounce_t *pin_b)
@@ -762,7 +764,42 @@ void wheel_decrement()
     }
 }
 
-void do_encoder()
+static int32_t last_position = 0;
+static int32_t position = 0;
+static uint8_t prev_ab = 0;
+void do_encoder(void) {
+    uint32_t v = gpio_get_all();
+    uint8_t ab = ((v >> GPIO_QUAD_A) & 1) << 1 | (((v >> GPIO_QUAD_B) & 1));
+
+    static const int8_t lut[16] = {
+        0, -1, +1, 0,
+        +1, 0, 0, -1,
+        -1, 0, 0, +1,
+        0, +1, -1, 0
+    };
+
+    int8_t delta = lut[(prev_ab << 2) | ab];
+    position += delta;
+
+    prev_ab = ab;
+
+    int32_t diff = position - last_position;
+    int32_t spc = app_config.enc_states_per_click;
+    if (diff >= spc)
+    {
+        wheel_increment();
+        last_position += spc;
+
+    }
+    else if (diff <= -spc)
+    {
+        wheel_decrement();
+        last_position -= spc;
+    }
+}
+
+// TODO: Remove this block if the new do_encoder stands the test of time
+/* void do_encoder_old()
 {
     static pin_debounce_t pin_a = {GPIO_QUAD_A, 0};
     static pin_debounce_t pin_b = {GPIO_QUAD_B, 0};
@@ -786,7 +823,7 @@ void do_encoder()
         }
         wheel_state_old = wheel_state;
     }
-}
+} */
 
 void init_buttons_encoder()
 {

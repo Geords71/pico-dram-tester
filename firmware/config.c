@@ -33,6 +33,7 @@ void do_system_config()
 };
 
 static bool parse_int32(const char* key, const char* value, void* out) {
+    int32_t* p = (int32_t*)out;
     char* end;
     long v = strtol(value, &end, 10);
 
@@ -48,8 +49,7 @@ static bool parse_int32(const char* key, const char* value, void* out) {
     // Now clamp/check for int32_t range explicitly
     if (v < INT32_MIN || v > INT32_MAX) return false;
 
-    *(int32_t*)out = (int32_t)v;
-    int32_t *p = out;
+    *p = v;
 
     ULOG_INFO("app_config.%s has been set to %d.", key, *p);
     return true;
@@ -87,12 +87,12 @@ typedef struct {
 
 app_config_t app_config = {
     .led_on = true,
-    .enc_debounce_count = 1000
+    .enc_states_per_click = 2,
 };
 
 static const config_field_t config_schema[] = {
-    { "led_on",             offsetof(app_config_t, led_on),             parse_bool},
-    { "enc_debounce_count", offsetof(app_config_t, enc_debounce_count), parse_int32},
+    { "led_on",               offsetof(app_config_t, led_on),               parse_bool},
+    { "enc_states_per_click", offsetof(app_config_t, enc_states_per_click), parse_int32},
 };
 
 void parse_config_line(const char* key, const char* value) {
@@ -101,7 +101,7 @@ void parse_config_line(const char* key, const char* value) {
     {
         if (strcmp(key, config_schema[i].key) == 0)
         {
-            void* field_ptr = &app_config + config_schema[i].offset;
+            void* field_ptr = (char*)&app_config + config_schema[i].offset;
             static bool retval;
 
             retval = config_schema[i].parse(key, value, field_ptr);

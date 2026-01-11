@@ -7,7 +7,7 @@
 typedef struct
 {
     bool led_on;
-    int32_t enc_debounce_count;
+    int32_t enc_states_per_click;
 } app_config_t;
 
 extern app_config_t app_config;

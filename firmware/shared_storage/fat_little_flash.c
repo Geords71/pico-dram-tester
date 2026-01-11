@@ -135,8 +135,6 @@ void fat_little_flash_initialize(void) {
         memcpy(dir_name, dir->name, dir_name_size);
         dir_name[dir_name_size] = '\0';
 
-        ULOG_INFO("%s", dir_name);
-
         if (strcmp(dir_name, "SYSTEM  CFG") == 0) {
             ULOG_INFO("SYSTEM.CFG found. Filesystem is OK.");
             return;
