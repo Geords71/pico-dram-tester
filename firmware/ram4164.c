@@ -18,7 +18,7 @@ static uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = 
 
 
 void ram4164_setup_pio(uint speed_grade, uint variant) {
-    get_ram1b1r_config("ram4164", ram4164_delays);
+    get_ram1b1r_config("ram4164", ram4164_delays, RAM4164_DELAY_SET_ROWS);
     ram1b1r_setup_pio(ram4164_delays[speed_grade], variant);
 }
 

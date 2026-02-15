@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "mem_chip.h"
 #include "hardware/pio.h"
 #include "ram1b1r.pio.h"
@@ -36,28 +38,51 @@ struct pio_program *get_patched_program(const struct pio_program *program, const
     return &patched_program;
 }
 
-void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET_COLS]) {
+void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET_COLS], uint8_t rowcount) {
 
     if (mount_shared_storage() != FR_OK) {
+        ULOG_WARNING("Shared USB storage could not be mounted. Hard coded delay values will be used.");
         return;
     }
 
     char filename[12];
     sprintf(filename, "%s.csv", chip_name);
 
+
     FIL fp;
     bool result = f_open(&fp, filename, FA_READ);
 
     if (result == FR_OK) {
-        uint8_t buffer[512];
-        UINT length;
-        f_gets(buffer, sizeof(buffer), &fp);
-        ULOG_INFO("Read delay line: %s", buffer);
+        ULOG_INFO("Reading delay values from %s...", filename);
+        uint8_t buffer[512] = {"\0"};
+
+        for (uint8_t row=0; row<rowcount; row++) {
+
+            if (f_gets(buffer, sizeof(buffer), &fp) == NULL) {
+                ULOG_INFO("Reached delay file EOF.");
+                break;
+            }
+            buffer[strcspn(buffer, "\n")] = 0;
+
+            ULOG_INFO("    Patching delay line %d: %s", row, buffer);
+
+            char *token;
+            token = strtok(buffer, ",");
+            for (uint8_t column=0; column<RAM1B1R_DELAY_SET_COLS; column++) {
+                if (token == NULL) {
+                    ULOG_ERROR("Encountered unexpected end of line. Continuing to next...");
+                    continue;
+                }
+                delay_list[row][column] = atoi(token);
+                token = strtok(NULL, ",");
+            }
+        }
+
         f_close(&fp);
         result = true;
 
     } else {
-        ULOG_WARNING("Can't open %s. Using hard-coded defaults: %d", filename, result);
+        ULOG_WARNING("Can't open %s. Using hard-coded deelay values: %d", filename, result);
         result = false;
     }
     unmount_shared_storage();
