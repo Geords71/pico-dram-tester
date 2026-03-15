@@ -6,13 +6,14 @@
 
 #define RAM4816_DELAY_SET_ROWS 3
 
-static const uint8_t ram4816_delays[RAM4816_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
+static uint8_t ram4816_delays[RAM4816_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
     {0,  0, 23, 3, 11,  4,  0,  0}, // 100ns
     {0,  0, 25, 4, 12,  6,  1,  0}, // 120ns
     {0,  0, 27, 3, 19,  9,  0,  0}  // 150ns
 };
 
 void ram4816_setup_pio(uint speed_grade, uint variant) {
+    get_ram1b1r_config("ram4816", ram4816_delays, RAM4816_DELAY_SET_ROWS);
     ram1b1r_setup_pio(ram4816_delays[speed_grade], variant);
 }
 

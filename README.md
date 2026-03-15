@@ -14,8 +14,10 @@ Benefits
 * Tests RAM *at full speed* so you can feel confident about a chip that passes.
 * Easy to construct with widely-available parts. No surface mount chips.
 * Low cost
-* Built-in DC-DC modules generate extra voltages required by 4116-class chips
-* Can be operated from a bench supply for voltage margin testing
+* Built-in DC-DC modules generate extra voltages required by 4116-class chips.
+* Can be operated from a bench supply for voltage margin testing.
+* USB mass storage config file support (beta). Change test timings (more coming soon), led enable, and rotary encoder clicks.
+* USB serial logging (beta). See what's going on under the hood via a serial terminal or monitor such as VSCode's.
 
 Supported Devices
 
