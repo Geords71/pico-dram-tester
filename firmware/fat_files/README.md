@@ -20,7 +20,7 @@ files, yet. And maybe avoid having any files open for too long on your host OS.
 
 The aim is to fix this. But the simple workaround for now is to power
 cycle your dram tester after making any config changes. Otherwise, any
-rem test you select will hang indefinitely.
+ram test you select will hang indefinitely.
 
 ## USB Serial Logging Support
 
