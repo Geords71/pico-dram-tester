@@ -8,12 +8,12 @@
 
 
 static uint8_t ram4164_delays[RAM4164_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
-    {0,  0, 15, 3, 11,  4,  0,  0}, // 100ns - tested on km4164b-10 No margin applied yet...
-    {0,  0, 14, 3, 15,  4,  0,  0}, // 120ns - tighter of all Mnfctr values and -10% margin applied
-    {0,  0, 18, 4, 20,  4,  0,  0}, // 150ns - tighter of all Mnfctr values and -15% margin applied
-    {0, 11, 20, 7, 13, 21,  4,  9}, // 200ns
-    {0, 20, 20, 8, 19, 24,  9, 10}, // 250ns
-    {0, 20, 20, 9, 22, 27, 19,  1}  // 300ns
+    {0,  0, 15, 3, 11,  4,  0, 0}, // 100ns - tested on km4164b-10 No margin applied yet...
+    {0,  0, 14, 3, 15,  4,  0, 0}, // 120ns - tighter of all Mnfctr values and -10% margin applied
+    {0,  0, 18, 4, 20,  4,  0, 0}, // 150ns - tighter of all Mnfctr values and -15% margin applied
+    {0,  0, 24, 4, 20, 17,  0, 0}, // 200ns
+    {0,  2, 30, 8, 26, 20,  0, 0}, // 250ns
+    {0, 10, 30, 8, 26, 23,  0, 0}  // 300ns - Complete guess! But very rare chip.
 };
 
 

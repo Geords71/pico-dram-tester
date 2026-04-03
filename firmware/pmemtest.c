@@ -23,7 +23,8 @@
 #include "shared_storage/fat_little_flash.h"
 
 // Defined RAM pio programs
-#include "ram4116.pio.h"
+#include "ram4027.h"
+#include "ram4116.h"
 #include "ram4816.h"
 #include "ram4132.pio.h"
 #include "ram4164.h"

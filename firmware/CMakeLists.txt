@@ -54,7 +54,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 add_dependencies (pmemtest build_fat_image)
 
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4116.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41128.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41256.pio)
@@ -76,6 +75,8 @@ target_sources(pmemtest PRIVATE
     mem_chip.c
     pio_patcher.c
     pmemtest.c
+    ram4027.c
+    ram4116.c
     ram4164.c
     ram4816.c
     shared_storage/fat_little_flash.c

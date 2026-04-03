@@ -38,7 +38,6 @@
 ; necessarily met. The state of data-out is indeterminate since the
 ; output pin could be either Hi-Z (effectivley disconnected) or contain
 ; data depending on the timing conditions. 
-; tVALUES and timings calculated below are for 100ns chip and its delays.
 
 main:
     jmp begin

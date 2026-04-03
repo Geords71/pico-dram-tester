@@ -172,11 +172,60 @@ void write_ram1b1r_8p(int addr, int data)
     pio_sm_get(pio, sm);
 }
 
+int calc_6p(int addr) {
+    // Because we only have six pins, need to do some bit shifting to be able
+    // to re-use the 8pin read function. This works because what are 7th 
+    // and 8th pins on 64k chips are not used for addresses on 4k examples.
+    // 4k chips like 4027 and 4015 use the 4116 socket on this board.
+    // The 4027's chip select pin is in the same location as address pin 6
+    // on a 4116. So we need to always have this pin pulled low when testing
+    // a 4027 in the 4116b socket. (Chip Select is active low). e.g.
+    return (addr & 0x003f) | ((addr << 2) & 0x3f00);
+}
+
+int read_ram1b1r_6p(int addr) {
+    return read_ram1b1r_8p(calc_6p(addr));
+}
+
+void write_ram1b1r_6p(int addr, int data) {
+    write_ram1b1r_8p(calc_6p(addr), data);
+}
+
+int calc_7p_half_lc(int addr) {
+    // Pin A0 for column select dictates if we are accessing low or high half.
+    return (addr & 0x007f) | ((addr << 2) & 0x7e00);
+}
+
+int read_ram1b1r_7p_half_lc(int addr)
+{
+    return read_ram1b1r_8p(calc_7p_half_lc(addr));
+}
+
+void write_ram1b1r_7p_half_lc(int addr, int data)
+{
+    write_ram1b1r_8p(calc_7p_half_lc(addr), data);
+}
+
+int calc_7p_half_hc(int addr) {
+    // Pin A0 for column select dictates if we are accessing low or high half.
+    return (addr & 0x007f) | ((addr << 2) & 0x7e00) | 0x100;
+}
+
+int read_ram1b1r_7p_half_hc(int addr)
+{
+    return read_ram1b1r_8p(calc_7p_half_hc(addr));
+}
+
+void write_ram1b1r_7p_half_hc(int addr, int data)
+{
+    write_ram1b1r_8p(calc_7p_half_hc(addr), data);
+}
+
 int calc_7p(int addr) {
     // Because we only have seven pins, need to do some bit shifting to be able
     // to re-use the 8pin read function. This works because what is the 8th pin
     // on 64k chips is not connected on 16k examples.
-    return (addr & 0x7f) | ((addr << 1) & 0x7f00);
+    return (addr & 0x007f) | ((addr << 1) & 0x7f00);
 }
 
 int read_ram1b1r_7p(int addr) {
@@ -184,14 +233,14 @@ int read_ram1b1r_7p(int addr) {
 }
 
 void write_ram1b1r_7p(int addr, int data) {
-    return write_ram1b1r_8p(calc_7p(addr), data);
+    write_ram1b1r_8p(calc_7p(addr), data);
 }
 
 int calc_8p_half_lr(int addr) {
     // Funkier: The column address starts at the MSB of the low (row) byte. So
     // we need to: shift column bits up by one; blat row byte's MSB; and then
     // AND/OR these values together using appropriate masking.
-    return (addr & 0x7f) | ((addr << 1) & 0xff00);
+    return (addr & 0x007f) | ((addr << 1) & 0xff00);
 }
 
 int read_ram1b1r_8p_half_lr(int addr)
@@ -208,7 +257,7 @@ int calc_8p_half_hr(int addr) {
     // Funkier: The column address starts at the MSB of the low (row) byte. So
     // we need to: shift column bits up by one; set row byte's MSB; and then
     // AND/OR these values together using appropriate masking.
-    return ((addr & 0x7f) | 0x80) | ((addr << 1) & 0xff00);
+    return ((addr & 0x007f) | 0x0080) | ((addr << 1) & 0xff00);
 }
 
 int read_ram1b1r_8p_half_hr(int addr)
