@@ -12,11 +12,11 @@
 #include "config.h"
 #include "mem_chip.h"
 #include "xoroshiro64starstar.h"
-#include <pico/stdlib.h>
-#include <pico/flash.h>
-#include <pico/multicore.h>
-#include <pico/util/queue.h>
-#include <tusb.h>
+#include "hardware/timer.h"
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
+#include "pico/util/queue.h"
+#include "tusb.h"
 
 // Shared program and usb device file storage
 #include "config.h"
@@ -111,24 +111,32 @@ typedef struct
 queue_t call_queue;
 queue_t results_queue;
 
+void __no_inline_not_in_flash_func(busy_wait_ram)(uint32_t ms) {
+    // Each loop is roughly 10-20 cycles. 
+    // At 150MHz (Pico 2), this is a "human perceivable" delay.
+    for (volatile uint32_t i = 0; i < ms * 10000; i++) {
+        __asm("nop");
+    }
+}
+
 // Entry point for second core. This is just a generic
 // function dispatcher lifted from the Raspberry Pi example code.
-void core1_entry() {
-    flash_safe_execute_core_init();
-    //multicore_lockout_victim_init();
-    while (1) {
+void __no_inline_not_in_flash_func(core1_entry)() {
+
+    queue_entry_t entry;
+    int32_t result = 0;
+    while (true) {
         // Function pointer is passed to us via the queue_entry_t which also
         // contains the function parameter.
-        // We provide an int32_t return value by simply pushing it back on the
-        // return queue which also indicates the result is ready.
+        if(queue_try_remove(&call_queue, &entry)) {
+            // We provide an int32_t return value by simply pushing it back on the
+            // return queue which also indicates the result is ready.
+            result = entry.func(entry.data, entry.data2);
+            queue_try_add(&results_queue, &result);
+        } else {
+            busy_wait_ram(100);
+        };
 
-        queue_entry_t entry;
-
-        queue_remove_blocking(&call_queue, &entry);
-
-        int32_t result = entry.func(entry.data, entry.data2);
-
-        queue_add_blocking(&results_queue, &result);
     }
 }
 
@@ -146,69 +154,69 @@ static inline void power_off()
 }
 
 // Wrapper that just calls the read routine for the selected chip
-static inline int ram_read(int addr)
+static int __no_inline_not_in_flash_func(ram_read)(int addr)
 {
     return chip_list[main_menu.sel_line]->ram_read(addr);
 }
 
 // Wrapper that just calls the write routine for the selected chip
-static inline void ram_write(int addr, int data)
+static void __no_inline_not_in_flash_func(ram_write)(int addr, int data)
 {
     chip_list[main_menu.sel_line]->ram_write(addr, data);
 }
 
 // Low level routines for march-b algorithm
-static inline bool me_r0(int a)
+static bool __no_inline_not_in_flash_func(me_r0)(int a)
 {
     int bit = ram_read(a) & ram_bit_mask;
     return (bit == 0);
 }
 
-static inline bool me_r1(int a)
+static bool  __no_inline_not_in_flash_func(me_r1)(int a)
 {
     int bit = ram_read(a) & ram_bit_mask;
     return (bit == ram_bit_mask);
 }
 
-static inline bool me_w0(int a)
+static bool __no_inline_not_in_flash_func(me_w0)(int a)
 {
     ram_write(a, ~ram_bit_mask);
     return true;
 }
 
-static inline bool me_w1(int a)
+static bool __no_inline_not_in_flash_func(me_w1)(int a)
 {
     ram_write(a, ram_bit_mask);
     return true;
 }
 
-static inline bool marchb_m0(int a)
+static bool __no_inline_not_in_flash_func(marchb_m0)(int a)
 {
     me_w0(a);
     return true;
 }
 
-static inline bool marchb_m1(int a)
+static bool __no_inline_not_in_flash_func(marchb_m1)(int a)
 {
     return me_r0(a) && me_w1(a) && me_r1(a) && me_w0(a) && me_r0(a) && me_w1(a);
 }
 
-static inline bool marchb_m2(int a)
+static bool __no_inline_not_in_flash_func(marchb_m2)(int a)
 {
     return me_r1(a) && me_w0(a) && me_w1(a);
 }
 
-static inline bool marchb_m3(int a)
+static bool __no_inline_not_in_flash_func(marchb_m3)(int a)
 {
     return me_r1(a) && me_w0(a) && me_w1(a) && me_w0(a);
 }
 
-static inline bool marchb_m4(int a)
+static bool __no_inline_not_in_flash_func(marchb_m4)(int a)
 {
     return me_r0(a) && me_w1(a) && me_w0(a);
 }
 
-static inline bool march_element(int addr_size, bool descending, int algorithm)
+static bool __no_inline_not_in_flash_func(march_element)(int addr_size, bool descending, int algorithm)
 {
     int inc = descending ? -1 : 1;
     int start = descending ? (addr_size - 1) : 0;
@@ -243,7 +251,7 @@ static inline bool march_element(int addr_size, bool descending, int algorithm)
     return true;
 }
 
-uint32_t marchb_testbit(uint32_t addr_size)
+uint32_t __no_inline_not_in_flash_func(marchb_testbit)(uint32_t addr_size)
 {
     bool ret;
     ret = march_element(addr_size, false, 0);
@@ -260,7 +268,7 @@ uint32_t marchb_testbit(uint32_t addr_size)
 }
 
 // Runs the memory test on the 2nd core
-uint32_t marchb_test(uint32_t addr_size, uint32_t bits)
+uint32_t __no_inline_not_in_flash_func(marchb_test)(uint32_t addr_size, uint32_t bits)
 {
     int failed = 0;
     int bit = 0;
@@ -280,7 +288,7 @@ uint32_t marchb_test(uint32_t addr_size, uint32_t bits)
 #define ARTISANAL_NUMBER 42
 static uint64_t random_seeds[PSEUDO_VALUES];
 
-void psrand_init_seeds()
+void __no_inline_not_in_flash_func(psrand_init_seeds)()
 {
     int i;
     psrand_seed(ARTISANAL_NUMBER);
@@ -289,7 +297,7 @@ void psrand_init_seeds()
     }
 }
 
-uint32_t psrand_next_bits(uint32_t bits)
+uint32_t __no_inline_not_in_flash_func(psrand_next_bits)(uint32_t bits)
 {
     static int bitcount = 0;
     static uint32_t cur_rand;
@@ -308,7 +316,7 @@ uint32_t psrand_next_bits(uint32_t bits)
 
 
 // Pseudorandom test
-uint32_t psrandom_test(uint32_t addr_size, uint32_t bits)
+uint32_t __no_inline_not_in_flash_func(psrandom_test)(uint32_t addr_size, uint32_t bits)
 {
     uint i;
     uint32_t bitsout;
@@ -339,7 +347,7 @@ uint32_t psrandom_test(uint32_t addr_size, uint32_t bits)
     return 0;
 }
 
-uint32_t refresh_subtest(uint32_t addr_size, uint32_t bits, uint32_t time_delay)
+uint32_t __no_inline_not_in_flash_func(refresh_subtest)(uint32_t addr_size, uint32_t bits, uint32_t time_delay)
 {
     uint32_t bitsout;
     uint32_t bitsin;
@@ -364,7 +372,7 @@ uint32_t refresh_subtest(uint32_t addr_size, uint32_t bits, uint32_t time_delay)
 }
 
 
-uint32_t refresh_test(uint32_t addr_size, uint32_t bits)
+uint32_t __no_inline_not_in_flash_func(refresh_test)(uint32_t addr_size, uint32_t bits)
 {
     return refresh_subtest(addr_size, bits, 5000);
 }
@@ -374,21 +382,25 @@ static const char *ram_test_names[] = {"March-B", "Pseudo", "Refresh"};
 
 // Initial entry for the RAM test routines running
 // on the second CPU core.
-uint32_t all_ram_tests(uint32_t addr_size, uint32_t bits)
+uint32_t __no_inline_not_in_flash_func(all_ram_tests)(uint32_t addr_size, uint32_t bits)
 {
     int failed;
     int test = 0;
-// Initialize RAM by performing n RAS cycles
+
+    // Initialize RAM by performing n RAS cycles
     march_element(addr_size, false, 0);
-// Now run actual tests
+
+    // Now run actual tests
     queue_add_blocking(&stat_cur_test, &test);
     failed = marchb_test(addr_size, bits);
     if (failed) return failed;
     test = 1;
+
     queue_add_blocking(&stat_cur_test, &test);
     failed = psrandom_test(addr_size, bits);
     if (failed) return failed;
     test = 2;
+
     queue_add_blocking(&stat_cur_test, &test);
     failed = refresh_test(addr_size, bits);
     if (failed) return failed;
@@ -401,20 +413,6 @@ typedef struct {
 } pin_debounce_t;
 
 #define BUTTON_DEBOUNCE_COUNT 50000
-
-// TODO: Remove this block if the new do_encoder method stands test of time.
-// Debounces a pin
-/*uint8_t do_debounce(pin_debounce_t *d)
-{
-    if (gpio_get(d->pin)) {
-        d->hcount++;
-        if (d->hcount > app_config.enc_debounce_count) d->hcount = app_config.enc_debounce_count;
-    } else {
-        d->hcount = 0;
-    }
-    return (d->hcount >= app_config.enc_debounce_count) ? 1 : 0;
-}
-*/
 
 // Returns true only *once* when a button is pushed. No key repeat.
 bool is_button_pushed(pin_debounce_t *pin_b)
@@ -531,7 +529,7 @@ void show_test_gui()
 }
 
 // Begins the RAM test with the selected RAM chip
-void start_the_ram_test()
+void __no_inline_not_in_flash_func(start_the_ram_test)()
 {
     // Get the power turned on
     power_on();
@@ -541,12 +539,18 @@ void start_the_ram_test()
 
     ULOG_INFO("Testing %s chip at %s...", chip->chip_name, speed_menu.items[speed_grade]);
 
+    ULOG_INFO("Setting up PIO...");
     // Get the PIO going
     chip->setup_pio(speed_grade, variants_menu.sel_line);
 
-    // Dispatch the second core
+    // Dispatch to the second core
+    ULOG_INFO("Sending all_ram_tests() to the core1 call_queue...");
     queue_entry_t entry = {all_ram_tests, chip->mem_size, chip->bits};
-    queue_add_blocking(&call_queue, &entry);
+    if(queue_try_add(&call_queue, &entry)) {
+        ULOG_INFO("Sent.");
+    } else {
+        ULOG_WARNING("Couldn't send!");
+    };
 }
 
 // Stops the RAM test
@@ -799,33 +803,6 @@ void do_encoder(void) {
     }
 }
 
-// TODO: Remove this block if the new do_encoder stands the test of time
-/* void do_encoder_old()
-{
-    static pin_debounce_t pin_a = {GPIO_QUAD_A, 0};
-    static pin_debounce_t pin_b = {GPIO_QUAD_B, 0};
-    static uint8_t wheel_state_old = 0;
-    uint8_t st;
-    uint8_t wheel_state;
-
-    wheel_state = do_debounce(&pin_a) | (do_debounce(&pin_b) << 1);
-    st = wheel_state | (wheel_state_old << 4);
-    if (wheel_state != wheel_state_old) {
-        // Present state, next state
-        // 00 -> 01 clockwise
-        // 10 -> 11 counterclockwise
-        // 11 -> 10 clockwise
-        // 01 -> 00 counterclockwise
-        if ((st == 0x01) || (st == 0x32)) {
-            wheel_increment();
-        }
-        if ((st == 0x23) || (st == 0x10)) {
-            wheel_decrement();
-        }
-        wheel_state_old = wheel_state;
-    }
-} */
-
 void init_buttons_encoder()
 {
     gpio_init(GPIO_QUAD_A);
@@ -919,6 +896,10 @@ int main() {
 
     ULOG_INFO("Pico DRAM Tester reporting for duty!");
 
+    uint32_t current_vtable = scb_hw->vtor;
+    if (current_vtable >= 0x10000000 && current_vtable < 0x11000000) {
+        ULOG_WARNING("VECTOR TABLE IN FLASH! USB flash writes will be unsafe and require a reboot!");
+    }
 // Testing
 #if 0
     power_on();

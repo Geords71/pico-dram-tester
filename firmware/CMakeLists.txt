@@ -48,9 +48,15 @@ add_custom_target(build_fat_image
 add_executable(pmemtest)
 
 # Help with overclock XIP abd flash writes.
-target_compile_definitions(${PROJECT_NAME} PRIVATE 
+target_compile_definitions(pmemtest PRIVATE 
+    PICO_COPY_TO_RAM=1
+    PICO_FLASH_SAFE_EXECUTE_PICO_SUPPORT_MULTICORE_LOCKOUT=0
     PICO_FLASH_SPI_CLKDIV=4
+    PICO_FLASH_ASSUME_CORE1_SAFE=1 
 )
+
+# Optional: Force the compiler to not assume data is in Flash
+target_compile_options(pmemtest PRIVATE -mno-pic-data-is-text-relative)
 
 add_dependencies (pmemtest build_fat_image)
 
@@ -91,6 +97,7 @@ target_sources(pmemtest PRIVATE
 target_link_libraries(pmemtest PRIVATE
     pico_stdlib
     pico_flash
+    hardware_flash
     pico_multicore
     hardware_pio
     hardware_spi
@@ -99,7 +106,7 @@ target_link_libraries(pmemtest PRIVATE
 )
 
 pico_enable_stdio_usb(pmemtest 1)
-
+pico_set_binary_type(pmemtest copy_to_ram)
 pico_add_extra_outputs(pmemtest)
 
 add_custom_command(

@@ -1,19 +1,16 @@
 #include "fat_little_flash.h"
 #include "fat_image_new.h"
-//#include "fat_image.h"
 #include <ctype.h>
 #include <math.h>
-#include <pico/flash.h>
-#include <hardware/flash.h>
-#include "hardware/irq.h"
-//#include <hardware/sync.h>
-#include <hardware/watchdog.h>
-#include <pico/stdlib.h>
+#include "pico/flash.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
+#include "pico/stdlib.h"
 #include "pico/multicore.h"
 
 #include <stdio.h>
 #include <string.h>
-#include <logging.h>
+#include "logging.h"
 
 #define FLASH_FAT_BLOCK_SIZE   4096
 #define FLASH_FAT_OFFSET       0x1F0000
@@ -75,13 +72,15 @@ typedef struct {
 
 void write_flash(void *write_params) {
     write_flash_params_t *wp = write_params; 
+    uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(wp->flash_offs, wp->count);
     flash_range_program(wp->flash_offs, wp->data, wp->count);
+    restore_interrupts(ints);
 }
 
 static uint8_t staging_buf[FLASH_SECTOR_SIZE];
 
-void __not_in_flash_func(fat_little_flash_reflash)(void) {
+void fat_little_flash_reflash(void) {
     uint32_t irq_state = save_and_disable_interrupts();
 
     flash_range_erase(FLASH_FAT_OFFSET, fat_image_new_len);
@@ -175,19 +174,8 @@ bool fat_little_flash_write(int block, uint8_t *buffer) {
     memcpy(write_params.data + flash_sector_fat_offset, buffer, FAT_BLOCK_SIZE);
 
     // Clear and update flash sectors.
-//    multicore_lockout_start_blocking();
     //stdio_set_driver_enabled(&stdio_usb, false);
- //   uint32_t ints = save_and_disable_interrupts();
-
-    
-    //flash_range_erase(write_params.flash_offs, write_params.count);
-    //flash_range_program(write_params.flash_offs, write_params.data, write_params.count);
-    flash_safe_execute(write_flash, (void *)&write_params, UINT32_MAX);
-
-
-  //  restore_interrupts(ints);
-    //stdio_set_driver_enabled(&stdio_usb, true);
-   // multicore_lockout_end_blocking();
+    write_flash((void *)&write_params);
 
     return true;
 }

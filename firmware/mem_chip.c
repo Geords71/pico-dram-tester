@@ -82,7 +82,7 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
         result = true;
 
     } else {
-        ULOG_WARNING("Can't open %s. Using hard-coded deelay values: %d", filename, result);
+        ULOG_WARNING("Can't open %s. Using hard-coded delay values: %d", filename, result);
         result = false;
     }
     unmount_shared_storage();
