@@ -1,6 +1,8 @@
 #ifndef _GUI_H
 #define _GUI_H
 
+#include "st7789.h"
+
 // A few colors
 #define COLOR_BLACK 0x0000
 #define COLOR_DKBLUE 0xa800

@@ -6,6 +6,7 @@
 #include "pio_patcher.h"
 #include "ram1b1r.pio.h"
 
+#define NUM_CHIPS 13
 #define MEMCHIP_MAX_VARIANTS 8
 
 typedef struct {
@@ -27,6 +28,8 @@ typedef struct {
     const char *chip_name;
     const char *speed_names[];
 } mem_chip_t;
+
+extern const mem_chip_t *chip_list[NUM_CHIPS];
 
 extern PIO pio;
 extern uint sm;

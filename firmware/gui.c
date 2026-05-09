@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "st7789.h"
 #include "gui.h"
 
+#include "st7789.h"
 #include "sserif20.h"
 #include "widgets16.h"
 

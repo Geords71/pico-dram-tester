@@ -74,12 +74,16 @@ target_include_directories(pmemtest PRIVATE
 )
 
 target_sources(pmemtest PRIVATE
+    board.c
     config.c
     gui.c
     logging/ulog.c
     logging/logging.c
     mem_chip.c
+    menu.c
+    mem_tests.c
     pio_patcher.c
+    queue.c
     pmemtest.c
     ram4027.c
     ram4116.c

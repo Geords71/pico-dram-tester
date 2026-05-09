@@ -4,13 +4,40 @@
 #include "mem_chip.h"
 #include "hardware/pio.h"
 #include "ram1b1r.pio.h"
-#include <ff.h>
+#include "ff.h"
 #include "shared_storage.h"
-#include <logging.h>
+#include "logging.h"
+
+// Defined RAM pio programs
+#include "ram4027.h"
+#include "ram4116.h"
+#include "ram4816.h"
+#include "ram4132.pio.h"
+#include "ram4164.h"
+#include "ram41128.pio.h"
+#include "ram41256.pio.h"
+#include "ram_4bit.pio.h"
 
 PIO pio;
 uint sm = 0;
 uint offset; // Returns offset of starting instruction
+
+const mem_chip_t *chip_list[NUM_CHIPS] = {
+    &ram4027_chip,
+    &ram4116_half_chip,
+    &ram4116_chip,
+    &ram4816_chip,
+    &ram4132_stk_chip,
+    &ram4164_half_chip,
+    &ram4164_chip,
+    &ram41128_chip,
+    &ram41256_chip,
+    &ram4416_half_chip,
+    &ram4416_chip,
+    &ram4464_chip,
+    &ram44256_chip,
+};
+
 
 struct pio_program *get_patched_program(const struct pio_program *program, const uint8_t *delay_set, uint8_t delay_set_size)
 {

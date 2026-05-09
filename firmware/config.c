@@ -113,8 +113,14 @@ void parse_config_line(const char* key, const char* value) {
     }
 }
 
+static bool loaded = false;
 
-void load_app_config() {
+void load_app_config(bool refresh) {
+    if (loaded && !refresh) {
+        ULOG_INFO("Config is already loaded and a refresh was not requested.");
+        return;
+    }
+
     ULOG_INFO("Loading settings from %s...", CONFIG_FILE_PATH);
     if (mount_shared_storage() != FR_OK)
     {
@@ -143,4 +149,5 @@ void load_app_config() {
 
     f_close(&fp);
     unmount_shared_storage();
+    loaded = true;
 }

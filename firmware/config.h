@@ -12,7 +12,7 @@ typedef struct
 
 extern app_config_t app_config;
 
-extern void load_app_config();
+extern void load_app_config(bool refresh);
 
 void do_system_config();
 uint32_t get_system_overclock();
