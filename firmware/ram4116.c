@@ -6,7 +6,7 @@
 
 #define RAM4116_DELAY_SET_ROWS 6
 
-static uint8_t ram4116_delays[RAM4116_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
+static delay_sets_t ram4116_delays = {
     {0, 0, 18,  3,  8,  6, 0, 0}, // 100ns
     {0, 0, 19,  3, 12,  8, 0, 0}, // 120ns
     {0, 0, 19,  4, 14, 11, 0, 0}, // 150ns
@@ -15,12 +15,8 @@ static uint8_t ram4116_delays[RAM4116_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = 
     {0, 8, 30, 14, 29, 22, 0, 0}  // 300ns
 };
 
-void ram4116_setup_pio(uint speed_grade, uint variant) {
-    get_ram1b1r_config("ram4116", ram4116_delays, RAM4116_DELAY_SET_ROWS);
-    ram1b1r_setup_pio(ram4116_delays[speed_grade], variant);
-}
+void ram4116_setup_pio(uint speed_grade, uint variant);
 
-// This RAM chip configuration
 const mem_chip_t ram4116_chip = {
     .setup_pio = ram4116_setup_pio,
     .teardown_pio = ram1b1r_teardown_pio,
@@ -29,41 +25,15 @@ const mem_chip_t ram4116_chip = {
     .mem_size = 16384,
     .bits = 1,
     .variants = NULL,
-    .speed_grades = RAM4116_DELAY_SET_ROWS,
-    .chip_name = "4116 (16Kx1)",
+    .name = "4116 (16Kx1)",
+    .timing_family = "ram4116",
+    .delay_set_rows = RAM4116_DELAY_SET_ROWS,
+    .delay_set_cols = RAM1B1R_DELAY_SET_COLS,
+    .delay_sets = ram4116_delays,
     .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}
 };
 
-static const mem_chip_variants_t ram4116_half_chip_variants = {
-    .num_variants = 2,
-    .variant_names = {"MK4108-40 (low)", "MK4108-41 (high)"},
-    .ram_reads = {
-        read_ram1b1r_7p_half_lc,
-        read_ram1b1r_7p_half_hc
-    },
-    .ram_writes = {
-        write_ram1b1r_7p_half_lc,
-        write_ram1b1r_7p_half_hc
-    }
-};
-
-void ram4116_half_setup_pio(uint speed_grade, uint variant)
-{
-    ram4116_setup_pio(speed_grade, 0);
-    ram4116_half_chip.ram_read = ram4116_half_chip_variants.ram_reads[variant];
-    ram4116_half_chip.ram_write = ram4116_half_chip_variants.ram_writes[variant];
-    return;
+void ram4116_setup_pio(uint speed_grade, uint variant) {
+    get_ram_config(ram4116_chip);
+    ram1b1r_setup_pio(ram4116_delays[speed_grade], variant);
 }
-
-mem_chip_t ram4116_half_chip = {
-    .setup_pio = ram4116_half_setup_pio,
-    .teardown_pio = ram1b1r_teardown_pio,
-    .ram_read = read_ram1b1r_7p,
-    .ram_write = write_ram1b1r_7p,
-    .mem_size = 8192,
-    .bits = 1,
-    .variants = &ram4116_half_chip_variants,
-    .speed_grades = RAM4116_DELAY_SET_ROWS,
-    .chip_name = "4108 (8Kx1 use 4116skt)",
-    .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}
-};

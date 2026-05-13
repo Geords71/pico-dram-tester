@@ -10,9 +10,10 @@
 
 // Defined RAM pio programs
 #include "ram4027.h"
+#include "ram4108.h"
 #include "ram4116.h"
 #include "ram4816.h"
-#include "ram4132.pio.h"
+#include "ram4132.h"
 #include "ram4164.h"
 #include "ram41128.pio.h"
 #include "ram41256.pio.h"
@@ -24,7 +25,7 @@ uint offset; // Returns offset of starting instruction
 
 const mem_chip_t *chip_list[NUM_CHIPS] = {
     &ram4027_chip,
-    &ram4116_half_chip,
+    &ram4108_chip,
     &ram4116_chip,
     &ram4816_chip,
     &ram4132_stk_chip,
@@ -65,7 +66,7 @@ struct pio_program *get_patched_program(const struct pio_program *program, const
     return &patched_program;
 }
 
-void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET_COLS], uint8_t rowcount) {
+void get_ram_config(mem_chip_t chip) {
 
     if (mount_shared_storage() != FR_OK) {
         ULOG_WARNING("Shared USB storage could not be mounted. Hard coded delay values will be used.");
@@ -73,8 +74,7 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
     }
 
     char filename[12];
-    sprintf(filename, "%s.csv", chip_name);
-
+    sprintf(filename, "%s.csv", chip.timing_family);
 
     FIL fp;
     bool result = f_open(&fp, filename, FA_READ);
@@ -83,7 +83,7 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
         ULOG_INFO("Reading delay values from %s...", filename);
         uint8_t buffer[512] = {"\0"};
 
-        for (uint8_t row=0; row<rowcount; row++) {
+        for (uint8_t row=0; row<chip.delay_set_rows; row++) {
 
             if (f_gets(buffer, sizeof(buffer), &fp) == NULL) {
                 ULOG_INFO("Reached delay file EOF.");
@@ -95,12 +95,12 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
 
             char *token;
             token = strtok(buffer, ",");
-            for (uint8_t column=0; column<RAM1B1R_DELAY_SET_COLS; column++) {
+            for (uint8_t col=0; col<chip.delay_set_cols; col++) {
                 if (token == NULL) {
                     ULOG_ERROR("Encountered unexpected end of line. Continuing to next...");
                     continue;
                 }
-                delay_list[row][column] = atoi(token);
+                chip.delay_sets[row][col] = atoi(token);
                 token = strtok(NULL, ",");
             }
         }
@@ -115,12 +115,13 @@ void get_ram1b1r_config(char chip_name[], uint8_t delay_list[][RAM1B1R_DELAY_SET
     unmount_shared_storage();
 }
 
-void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant)
+void ram1b1r_setup_pio(delay_set_t delay_set, uint8_t variant)
 {
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
         get_patched_program(
-            &ram1b1r_program, delay_set, RAM1B1R_DELAY_SET_COLS),
+            &ram1b1r_program, delay_set, RAM1B1R_DELAY_SET_COLS
+        ),
         &pio, &sm, &offset, pin, 17, true
     );
 

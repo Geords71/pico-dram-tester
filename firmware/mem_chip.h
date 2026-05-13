@@ -8,13 +8,22 @@
 
 #define NUM_CHIPS 13
 #define MEMCHIP_MAX_VARIANTS 8
+#define MEMCHIP_MAX_DELAY_SET_ROWS 8
+#define MEMCHIP_MAX_DELAY_SET_COLS 8
+
+typedef struct mem_chip_variant_t {
+    char *name;
+    const int (*ram_read)(int);
+    const void (*ram_write)(int, int);
+} mem_chip_variant_t;
 
 typedef struct {
-    uint8_t num_variants;
-    const char *variant_names[MEMCHIP_MAX_VARIANTS];
-    const int (*ram_reads[MEMCHIP_MAX_VARIANTS])(int);
-    const void (*ram_writes[MEMCHIP_MAX_VARIANTS])(int, int);
+    const uint8_t len;
+    const mem_chip_variant_t list[MEMCHIP_MAX_VARIANTS];
 } mem_chip_variants_t;
+
+typedef uint8_t delay_set_t[MEMCHIP_MAX_DELAY_SET_COLS];
+typedef delay_set_t delay_sets_t[MEMCHIP_MAX_DELAY_SET_ROWS];
 
 typedef struct {
     void (*setup_pio)(uint speed_grade, uint variant);
@@ -24,9 +33,12 @@ typedef struct {
     uint32_t mem_size;
     uint32_t bits;
     const mem_chip_variants_t *variants;
-    uint8_t speed_grades;
-    const char *chip_name;
-    const char *speed_names[];
+    const char *name;
+    const char *timing_family;
+    uint8_t delay_set_rows;
+    uint8_t delay_set_cols;
+    delay_set_t *delay_sets;
+    char *speed_names[];
 } mem_chip_t;
 
 extern const mem_chip_t *chip_list[NUM_CHIPS];
@@ -35,6 +47,7 @@ extern PIO pio;
 extern uint sm;
 extern uint offset; // Returns offset of starting instruction
 
+extern struct pio_program *get_patched_program(const struct pio_program *program, const uint8_t *delay_set, uint8_t delay_set_size);
 extern int read_ram1b1r_6p(int addr);
 extern void write_ram1b1r_6p(int addr, int data);
 
@@ -58,8 +71,8 @@ extern void write_ram1b1r_8p_half_hr(int addr, int data);
 extern void write_ram1b1r_8p_half_lc(int addr, int data);
 extern void write_ram1b1r_8p_half_hc(int addr, int data);
 
-extern void ram1b1r_setup_pio(const uint8_t *delay_set, uint variant);
+extern void ram1b1r_setup_pio(delay_set_t delay_set, uint8_t variant);
 extern void ram1b1r_teardown_pio();
 
-extern void get_ram1b1r_config(char[], uint8_t[][RAM1B1R_DELAY_SET_COLS], uint8_t);
+extern void get_ram_config(const mem_chip_t chip);
 #endif

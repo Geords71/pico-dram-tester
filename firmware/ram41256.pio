@@ -65,14 +65,14 @@ skip_ras:
 
 % c-sdk {
 
-#define RAM41256_DELAYS 6
-#define RAM41256_DELAY_FIELDS 8
-static const uint8_t ram41256_delays[6][32] = {{0, 0, 10, 4,  1,  0,  1,  0},    // 70ns
-                                               {0, 0, 13, 4,  1,  1,  3,  0},    // 80ns
-                                               {0, 0, 15, 2,  1,  5,  2,  0},    // 85ns
-                                               {0, 0, 22, 4,  2,  7,  2,  0},    // 100ns
-                                               {0, 0, 22, 4,  4,  6,  7,  0},    // 120ns
-                                               {0, 0, 25, 4,  5,  10, 11, 0} };  // 150ns
+#define RAM41256_DELAY_SET_ROWS 6
+#define RAM41256_DELAY_SET_COLS 8
+static delay_sets_t ram41256_delays = {{0, 0, 10, 4,  1,  0,  1,  0},    // 70ns
+                                       {0, 0, 13, 4,  1,  1,  3,  0},    // 80ns
+                                       {0, 0, 15, 2,  1,  5,  2,  0},    // 85ns
+                                       {0, 0, 22, 4,  2,  7,  2,  0},    // 100ns
+                                       {0, 0, 22, 4,  4,  6,  7,  0},    // 120ns
+                                       {0, 0, 25, 4,  5,  10, 11, 0} };  // 150ns
 
 static inline void ram41256_program_init(PIO pio, uint sm, uint offset, uint pin) {
     uint count;
@@ -136,7 +136,7 @@ void ram41256_setup_pio(uint speed_grade, uint variant)
     uint pin = 5;
     set_current_pio_program(&ram41256_program);
     // Patches the program with the correct delay values
-    pio_patch_delays(ram41256_delays[speed_grade], RAM41256_DELAY_FIELDS);
+    pio_patch_delays(ram41256_delays[speed_grade], RAM41256_DELAY_SET_COLS);
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(get_current_pio_program(), &pio, &sm, &offset, pin, 17, true);
     ram41256_program_init(pio, sm, offset, pin);
     pio_sm_set_enabled(pio, sm, true);
@@ -156,8 +156,11 @@ static const mem_chip_t ram41256_chip = { .setup_pio = ram41256_setup_pio,
                                           .mem_size = 262144,
                                           .bits = 1,
                                           .variants = NULL,
-                                          .speed_grades = RAM41256_DELAYS,
-                                          .chip_name = "41256 (256Kx1)",
+                                          .name = "41256 (256Kx1)",
+                                          .timing_family = "ram41256",
+                                          .delay_set_rows = RAM41256_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM41256_DELAY_SET_COLS,
+                                          .delay_sets = ram41256_delays,
                                           .speed_names = {"70ns", "80ns", "85ns", "100ns", "120ns", "150ns"} };
 
 

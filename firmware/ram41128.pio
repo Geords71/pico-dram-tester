@@ -71,13 +71,13 @@ skip_wr2:
 
 % c-sdk {
 // Original delay numbers are 27, 5, 3, 13, 9
-#define RAM41128_DELAYS 4
-#define RAM41128_DELAY_FIELDS 7
+#define RAM41128_DELAY_SET_ROWS 4
+#define RAM41128_DELAY_SET_COLS 7
 #define GPIO_LED 25
-static const uint8_t ram41128_delays[5][32] = {{0,  0, 27,  4,  8,  6,  8},    // 120ns
-                                               {0,  0, 27,  5, 11,  7, 12},    // 150ns
-                                               {0, 11, 23,  7, 14, 12, 17},    // 200ns
-                                               {0, 20, 23, 10, 21, 25,  9} };    // 250ns
+static delay_sets_t ram41128_delays = {{0,  0, 27,  4,  8,  6,  8},    // 120ns
+                                       {0,  0, 27,  5, 11,  7, 12},    // 150ns
+                                       {0, 11, 23,  7, 14, 12, 17},    // 200ns
+                                       {0, 20, 23, 10, 21, 25,  9} };    // 250ns
 
 static inline void ram41128_program_init(PIO pio, uint sm, uint offset, uint pin) {
     uint count;
@@ -145,7 +145,7 @@ void ram41128_setup_pio(uint speed_grade, uint variant)
     uint pin = 5;
     set_current_pio_program(&ram41128_program);
     // Patches the program with the correct delay values
-    pio_patch_delays(ram41128_delays[speed_grade], RAM41128_DELAY_FIELDS);
+    pio_patch_delays(ram41128_delays[speed_grade], RAM41128_DELAY_SET_COLS);
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(get_current_pio_program(), &pio, &sm, &offset, pin, 17, true);
     ram41128_program_init(pio, sm, offset, pin);
     pio_sm_set_enabled(pio, sm, true);
@@ -165,10 +165,9 @@ static const mem_chip_t ram41128_chip = { .setup_pio = ram41128_setup_pio,
                                           .mem_size = 131072, // 131072
                                           .bits = 1,
                                           .variants = NULL,
-                                          .speed_grades = RAM41128_DELAYS,
-                                          .chip_name = "41128 (128Kx1)",
+                                          .delay_set_rows = RAM41128_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM41128_DELAY_SET_COLS,
+                                          .delay_sets = ram41128_delays,
+                                          .name = "41128 (128Kx1)",
                                           .speed_names = {"120ns", "150ns", "200ns", "250ns"} };
-
-
-
 %}

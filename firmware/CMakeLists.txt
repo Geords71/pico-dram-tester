@@ -86,7 +86,9 @@ target_sources(pmemtest PRIVATE
     queue.c
     pmemtest.c
     ram4027.c
+    ram4108.c
     ram4116.c
+    ram4132.c
     ram4164.c
     ram4816.c
     shared_storage/fat_little_flash.c

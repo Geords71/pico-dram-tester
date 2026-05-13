@@ -45,7 +45,7 @@ void menu_init()
 
     uint i;
     for (i = 0; i < NUM_CHIPS; i++) {
-        main_menu_items[i] = (char *)chip_list[i]->chip_name;
+        main_menu_items[i] = (char *)chip_list[i]->name;
     }
     main_menu.tot_lines = NUM_CHIPS;
 }
@@ -61,10 +61,16 @@ void menu_main_show()
 void menu_variant_show()
 {
     uint chip = main_menu.sel_line;
-    cur_menu = &variants_menu;
+
+    static char *items[MEMCHIP_MAX_VARIANTS];
+    for (uint8_t i = 0; i<MEMCHIP_MAX_VARIANTS; i++) {
+        items[i] = chip_list[chip]->variants->list[i].name;
+    }
+
     paint_dialog("Select Variant");
-    variants_menu.items = (char **)chip_list[chip]->variants->variant_names;
-    variants_menu.tot_lines = chip_list[chip]->variants->num_variants;
+    cur_menu = &variants_menu;
+    cur_menu->tot_lines = chip_list[chip]->variants->len;
+    cur_menu->items = items;
     gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
@@ -75,7 +81,7 @@ void menu_speed_show()
     cur_menu = &speed_menu;
     paint_dialog("Select Speed Grade");
     speed_menu.items = (char **)chip_list[chip]->speed_names;
-    speed_menu.tot_lines = chip_list[chip]->speed_grades;
+    speed_menu.tot_lines = chip_list[chip]->delay_set_rows;
     gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
@@ -180,7 +186,7 @@ void __no_inline_not_in_flash_func(start_the_ram_test)(const mem_chip_t *mem_chi
     // Get the power turned on
     board_ram_power_on();
 
-    ULOG_INFO("Testing %s chip at %s...", mem_chip->chip_name, speed_menu.items[speed_grade]);
+    ULOG_INFO("Testing %s chip at %s...", mem_chip->name, speed_menu.items[speed_grade]);
 
     ULOG_INFO("Setting up PIO...");
     // Get the PIO going

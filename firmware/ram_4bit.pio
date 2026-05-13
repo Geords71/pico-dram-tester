@@ -75,27 +75,27 @@ skip_ras:
 
 % c-sdk {
 #define GPIO_LED 25
-#define RAM_4BIT_DELAY_FIELDS 8
-#define RAM44256_DELAYS 5
-// increase [5] from 2 to 5.
-static const uint8_t ram44256_delays[5][32] = {{0, 0,  6, 2,  1,  7,  1,  0},    // 60ns
-                                               {0, 0, 11, 2,  1,  7,  2,  0},    // 70ns
-                                               {0, 0, 17, 3,  1,  7,  4,  0},    // 80ns
-                                               {0, 0, 21, 3,  3,  7,  3,  0},    // 100ns
-                                               {0, 0, 23, 3,  4,  7,  6,  0} };  // 120ns
+#define RAM_4BIT_DELAY_SET_COLS 8
+#define RAM44256_DELAY_SET_ROWS 5
+#define RAM4464_DELAY_SET_ROWS 6
+#define RAM4416_DELAY_SET_ROWS 3
 
-#define RAM4464_DELAYS 6
-static const uint8_t ram4464_delays[6][32] =  {{0, 0,  6, 2,  1,  2,  1,  0},    // 60ns
-                                               {0, 0, 11, 2,  1,  2,  2,  0},    // 70ns
-                                               {0, 0, 17, 3,  1,  2,  4,  0},    // 80ns
-                                               {0, 0, 14, 3,  6,  5,  9,  0},    // 100ns
-                                               {0, 0, 23, 3,  6,  5,  6,  0},    // 120ns
-                                               {0, 0, 26, 3, 10,  6,  10, 0} };  // 150ns
+static delay_sets_t ram44256_delays = {{0, 0,  6, 2,  1,  7,  1,  0},    // 60ns
+                                       {0, 0, 11, 2,  1,  7,  2,  0},    // 70ns
+                                       {0, 0, 17, 3,  1,  7,  4,  0},    // 80ns
+                                       {0, 0, 21, 3,  3,  7,  3,  0},    // 100ns
+                                       {0, 0, 23, 3,  4,  7,  6,  0} };  // 120ns
 
-#define RAM4416_DELAYS 3
-static const uint8_t ram4416_delays[3][32] =  {{0, 0, 26, 3, 10,  7,  0,  0},    // 120ns
-                                               {0, 0, 26, 3, 15,  3,  8,  0},    // 150ns
-                                               {0,12, 20, 3, 21,  8,  12, 3} };  // 200ns
+static delay_sets_t ram4464_delays =  {{0, 0,  6, 2,  1,  2,  1,  0},    // 60ns
+                                       {0, 0, 11, 2,  1,  2,  2,  0},    // 70ns
+                                       {0, 0, 17, 3,  1,  2,  4,  0},    // 80ns
+                                       {0, 0, 14, 3,  6,  5,  9,  0},    // 100ns
+                                       {0, 0, 23, 3,  6,  5,  6,  0},    // 120ns
+                                       {0, 0, 26, 3, 10,  6,  10, 0} };  // 150ns
+
+static delay_sets_t ram4416_delays =  {{0, 0, 26, 3, 10,  7,  0,  0},    // 120ns
+                                       {0, 0, 26, 3, 15,  3,  8,  0},    // 150ns
+                                       {0,12, 20, 3, 21,  8,  12, 3} };  // 200ns
 
 static inline void ram44256_program_init(PIO pio, uint sm, uint offset, uint pin) {
     uint count;
@@ -286,11 +286,11 @@ void ram44256_64_16_setup_pio(uint speed_grade, int ic)
     set_current_pio_program(&ram44256_program);
     // Patches the program with the correct delay values
     if (ic == 2) {
-        pio_patch_delays(ram44256_delays[speed_grade], RAM_4BIT_DELAY_FIELDS);
+        pio_patch_delays(ram44256_delays[speed_grade], RAM_4BIT_DELAY_SET_COLS);
     } else if (ic == 1) {
-        pio_patch_delays(ram4464_delays[speed_grade], RAM_4BIT_DELAY_FIELDS);
+        pio_patch_delays(ram4464_delays[speed_grade], RAM_4BIT_DELAY_SET_COLS);
     } else {
-        pio_patch_delays(ram4416_delays[speed_grade], RAM_4BIT_DELAY_FIELDS);
+        pio_patch_delays(ram4416_delays[speed_grade], RAM_4BIT_DELAY_SET_COLS);
     }
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(get_current_pio_program(), &pio, &sm, &offset, pin, 17, true);
     ram44256_program_init(pio, sm, offset, pin);
@@ -328,8 +328,11 @@ static const mem_chip_t ram44256_chip = { .setup_pio = ram44256_setup_pio,
                                           .mem_size = 262144,
                                           .bits = 4,
                                           .variants = NULL,
-                                          .speed_grades = RAM44256_DELAYS,
-                                          .chip_name = "44256 (256Kx4)",
+                                          .name = "44256 (256Kx4)",
+                                          .timing_family = "ram44256",
+                                          .delay_set_rows = RAM44256_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM_4BIT_DELAY_SET_COLS,
+                                          .delay_sets = ram44256_delays,
                                           .speed_names = {"60ns", "70ns", "80ns", "100ns", "120ns"} };
 
 static const mem_chip_t ram4464_chip  = { .setup_pio = ram4464_setup_pio,
@@ -339,8 +342,11 @@ static const mem_chip_t ram4464_chip  = { .setup_pio = ram4464_setup_pio,
                                           .mem_size = 65536,
                                           .bits = 4,
                                           .variants = NULL,
-                                          .speed_grades = RAM4464_DELAYS,
-                                          .chip_name = "4464 (64Kx4)",
+                                          .name = "4464 (64Kx4)",
+                                          .timing_family = "ram4464",
+                                          .delay_set_rows = RAM4464_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM_4BIT_DELAY_SET_COLS,
+                                          .delay_sets = ram4464_delays,
                                           .speed_names = {"60ns", "70ns", "80ns", "100ns", "120ns", "150ns"} };
 
 static const mem_chip_t ram4416_chip  = { .setup_pio = ram4416_setup_pio,
@@ -350,14 +356,21 @@ static const mem_chip_t ram4416_chip  = { .setup_pio = ram4416_setup_pio,
                                           .mem_size = 16384,
                                           .bits = 4,
                                           .variants = NULL,
-                                          .speed_grades = RAM4416_DELAYS,
-                                          .chip_name = "4416 (16Kx4)",
+                                          .name = "4416 (16Kx4)",
+                                          .timing_family = "ram4416",
+                                          .delay_set_rows = RAM4416_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM_4BIT_DELAY_SET_COLS,
+                                          .delay_sets = ram4416_delays,
                                           .speed_names = {"120ns", "150ns", "200ns"} };
 
 // This RAM chip configuration
 static const mem_chip_variants_t ram4416_half_chip_variants = {
-                                          .num_variants = 2,
-                                          .variant_names = {"TMS4408T (low)", "TMS4408B (high)"} };
+    .len = 2,
+    .list = {
+        {"TMS4408T (low)",  ram4416_half0_read, ram4416_half0_write},
+        {"TMS4408B (high)", ram4416_half1_read, ram4416_half1_write},
+    },
+};
 
 static mem_chip_t ram4416_half_chip = { .setup_pio = ram4416_half_setup_pio,
                                           .teardown_pio = ram44256_teardown_pio,
@@ -366,29 +379,19 @@ static mem_chip_t ram4416_half_chip = { .setup_pio = ram4416_half_setup_pio,
                                           .mem_size = 8192,
                                           .bits = 4,
                                           .variants = &ram4416_half_chip_variants,
-                                          .speed_grades = RAM4416_DELAYS,
-                                          .chip_name = "4408 (8Kx4 use 4416skt)",
+                                          .name = "4408 (8Kx4 use 4416skt)",
+                                          .timing_family = "ram4408",
+                                          .delay_set_rows = RAM4416_DELAY_SET_ROWS,
+                                          .delay_set_cols = RAM_4BIT_DELAY_SET_COLS,
+                                          .delay_sets = ram4416_delays,
                                           .speed_names = {"120ns", "150ns", "200ns"} };
 
 // Only used for half-qualified 4408 devices
 void ram4416_half_setup_pio(uint speed_grade, uint variant)
 {
     ram4416_setup_pio(speed_grade, 0);
-
-    // Use appropriate read and write functions.
-    switch (variant) {
-        case 0:
-            ram4416_half_chip.ram_read = ram4416_half0_read;
-            ram4416_half_chip.ram_write = ram4416_half0_write;
-            break;
-        case 1:
-            ram4416_half_chip.ram_read = ram4416_half1_read;
-            ram4416_half_chip.ram_write = ram4416_half1_write;
-            break;
-        default:
-            break;
-    }
+    ram4416_half_chip.ram_read = ram4416_half_chip_variants.list[variant].ram_read;
+    ram4416_half_chip.ram_write = ram4416_half_chip_variants.list[variant].ram_write;
 }
-
 
 %}

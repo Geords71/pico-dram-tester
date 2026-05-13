@@ -7,7 +7,7 @@
 
 #define RAM4027_DELAY_SET_ROWS 5
 
-static uint8_t ram4027_delays[RAM4027_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = {
+static delay_sets_t ram4027_delays = {
     {0, 31, 21, 1,  8,  9,  3,  8}, // 120ns
     {0, 31, 12, 3, 10, 14,  3,  4}, // 150ns
     {0, 31, 14, 5, 13, 21,  6,  7}, // 200ns
@@ -15,10 +15,7 @@ static uint8_t ram4027_delays[RAM4027_DELAY_SET_ROWS][RAM1B1R_DELAY_SET_COLS] = 
     {0, 20, 21, 7, 22, 27, 19,  1}  // 300ns
 };
 
-void ram4027_setup_pio(uint speed_grade, uint variant) {
-    get_ram1b1r_config("ram4027", ram4027_delays, RAM4027_DELAY_SET_ROWS);
-    ram1b1r_setup_pio(ram4027_delays[speed_grade], variant);
-}
+void ram4027_setup_pio(uint speed_grade, uint variant);
 
 // This RAM chip configuration
 const mem_chip_t ram4027_chip = {
@@ -29,7 +26,15 @@ const mem_chip_t ram4027_chip = {
     .mem_size = 4096,
     .bits = 1,
     .variants = NULL,
-    .speed_grades = RAM4027_DELAY_SET_ROWS, // FIXME: check timings
-    .chip_name = "4027 (4Kx1 use 4116skt)",
+    .name = "4027 (4Kx1 use 4116skt)",
+    .timing_family = "ram4027",
+    .delay_set_rows = RAM4027_DELAY_SET_ROWS, // FIXME: check timings
+    .delay_set_cols = RAM1B1R_DELAY_SET_COLS, // FIXME: check timings
+    .delay_sets = ram4027_delays,
     .speed_names = {"120ns", "150ns", "200ns", "250ns", "300ns"}
 };
+
+void ram4027_setup_pio(uint speed_grade, uint variant) {
+    get_ram_config(ram4027_chip);
+    ram1b1r_setup_pio(ram4027_delays[speed_grade], variant);
+}
