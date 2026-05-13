@@ -9,14 +9,6 @@
 #include "mem_chip.h"
 #include "mem_tests.h"
 #include "queue.h"
-#include "chip_icon.h"
-#include "warn_icon.h"
-#include "error_icon.h"
-#include "check_icon.h"
-#include "drum_icon0.h"
-#include "drum_icon1.h"
-#include "drum_icon2.h"
-#include "drum_icon3.h"
 
 
 #define MAIN_MENU_ITEMS 16
@@ -26,22 +18,10 @@ gui_listbox_t main_menu = {7, 40, 220, MAIN_MENU_ITEMS, 4, 0, 0, main_menu_items
 gui_listbox_t variants_menu = {7, 40, 220, 0, 4, 0, 0, 0};
 gui_listbox_t speed_menu = {7, 40, 220, 0, 4, 0, 0, 0};
 
-
-typedef enum {
-    MAIN_MENU,
-    VARIANT_MENU,
-    SPEED_MENU,
-    DO_SOCKET,
-    DO_TEST,
-    TEST_RESULTS
-} gui_state_t;
-
-gui_state_t gui_state = MAIN_MENU;
-
 void menu_init()
 {
-    ULOG_INFO("Initializing LCD Display...");
-    st7789_init();
+    ULOG_INFO("Initializing GUI...");
+    gui_init();
 
     uint i;
     for (i = 0; i < NUM_CHIPS; i++) {
@@ -81,21 +61,21 @@ void menu_speed_show()
     cur_menu = &speed_menu;
     paint_dialog("Select Speed Grade");
     speed_menu.items = (char **)chip_list[chip]->speed_names;
-    speed_menu.tot_lines = chip_list[chip]->delay_set_rows;
+    speed_menu.tot_lines = chip_list[chip]->delay_sets.len;
     gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
 
 void menu_scroll_down()
 {
-    if (gui_state == MAIN_MENU || gui_state == SPEED_MENU || gui_state == VARIANT_MENU) {
+    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
         gui_listbox(cur_menu, LIST_ACTION_DOWN);
     }
 }
 
 void menu_scroll_up()
 {
-    if (gui_state == MAIN_MENU || gui_state == SPEED_MENU || gui_state == VARIANT_MENU) {
+    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
         gui_listbox(cur_menu, LIST_ACTION_UP);
     }
 }
@@ -206,20 +186,20 @@ void __no_inline_not_in_flash_func(start_the_ram_test)(const mem_chip_t *mem_chi
 void menu_select()
 {
     // Do something based on the current menu
-    switch (gui_state) {
+    switch (gui.state) {
         case MAIN_MENU:
             // Check for variant
             if (chip_list[main_menu.sel_line]->variants == NULL) {
-                gui_state = SPEED_MENU;
+                gui.state = SPEED_MENU;
                 menu_speed_show();
             } else {
-                gui_state = VARIANT_MENU;
+                gui.state = VARIANT_MENU;
                 menu_variant_show();
             }
             break;
         case VARIANT_MENU:
             // Set up variant
-            gui_state = SPEED_MENU;
+            gui.state = SPEED_MENU;
             menu_speed_show();
             break;
         case SPEED_MENU:
@@ -228,10 +208,10 @@ void menu_select()
                 "Turn on external supply afterwards, if used.",
                 &chip_icon
             );
-            gui_state = DO_SOCKET;
+            gui.state = DO_SOCKET;
             break;
         case DO_SOCKET:
-            gui_state = DO_TEST;
+            gui.state = DO_TEST;
             show_test_gui();
             start_the_ram_test(chip_list[main_menu.sel_line], speed_menu.sel_line, variants_menu.sel_line);
             break;
@@ -239,12 +219,12 @@ void menu_select()
             break;
         case TEST_RESULTS:
             // Quick retest to save time
-            gui_state = DO_TEST;
+            gui.state = DO_TEST;
             show_test_gui();
             start_the_ram_test(chip_list[main_menu.sel_line], speed_menu.sel_line, variants_menu.sel_line);
             break;
         default:
-            gui_state = MAIN_MENU;
+            gui.state = MAIN_MENU;
             break;
     }
 }
@@ -330,7 +310,7 @@ void do_menu_status()
     static uint16_t v_prev = 0;
     int test;
 
-    if (gui_state == DO_TEST) {
+    if (gui.state == DO_TEST) {
         do_visualization();
 
         // Update the status text
@@ -351,7 +331,7 @@ void do_menu_status()
             queue_remove_blocking(&results_queue, &retval);
 
             // Show the completion status
-            gui_state = TEST_RESULTS;
+            gui.state = TEST_RESULTS;
             st7789_fill(STATUS_ICON_X, STATUS_ICON_Y, 32, 32, COLOR_LTGRAY); // Erase icon
             if (retval == 0) {
                 paint_status(120, 35, 110, "Passed!");
@@ -376,35 +356,35 @@ void do_menu_status()
 // Called when the user presses the back button
 void menu_back()
 {
-    switch (gui_state) {
+    switch (gui.state) {
         case MAIN_MENU:
             break;
         case VARIANT_MENU:
-            gui_state = MAIN_MENU;
+            gui.state = MAIN_MENU;
             menu_main_show();
             break;
         case SPEED_MENU:
             // Check if our selection has a variant
             if (chip_list[main_menu.sel_line]->variants == NULL) {
-                gui_state = MAIN_MENU;
+                gui.state = MAIN_MENU;
                 menu_main_show();
             } else {
-                gui_state = VARIANT_MENU;
+                gui.state = VARIANT_MENU;
                 menu_variant_show();
             }
             break;
         case DO_SOCKET:
-            gui_state = SPEED_MENU;
+            gui.state = SPEED_MENU;
             menu_speed_show();
             break;
         case DO_TEST:
             break;
         case TEST_RESULTS:
-            gui_state = SPEED_MENU;
+            gui.state = SPEED_MENU;
             menu_speed_show();
             break;
         default:
-            gui_state = MAIN_MENU;
+            gui.state = MAIN_MENU;
             break;
     }
 }

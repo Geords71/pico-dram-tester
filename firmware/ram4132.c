@@ -6,11 +6,15 @@
 
 #define RAM4132_DELAY_SET_ROWS 4
 
-static delay_sets_t ram4132_delays = {
-    {0, 31, 31, 4, 11, 11,  9}, // 150ns
-    {0, 23, 24, 5, 14, 18, 13}, // 200ns
-    {0, 21, 22, 8, 20, 21, 16}, // 250ns
-    {0, 21, 22, 8, 23, 25, 24}, // 300ns}
+static const delay_sets_t ram4132_delay_sets = {
+    .len = RAM4132_DELAY_SET_ROWS,
+    .wid = RAM4132_DELAY_SET_COLS,
+    .list = {
+        {0, 31, 31, 4, 11, 11,  9}, // 150ns
+        {0, 23, 24, 5, 14, 18, 13}, // 200ns
+        {0, 21, 22, 8, 20, 21, 16}, // 250ns
+        {0, 21, 22, 8, 23, 25, 24}, // 300ns}
+    },
 };
 
 void ram4132_teardown_pio()
@@ -72,10 +76,10 @@ const mem_chip_t ram4132_stk_chip = {
     .ram_write = ram4132_ram_write,
     .mem_size = 32768,
     .bits = 1,
-    .delay_set_rows = RAM4132_DELAY_SET_ROWS,
-    .delay_set_cols = RAM4132_DELAY_SET_COLS,
-    .delay_sets = ram4132_delays,
+    .variants = NULL,
     .name = "4132 (32Kx1, stacked)",
+    .timing_family = "ram4132",
+    .delay_sets = ram4132_delay_sets,
     .speed_names = {"150ns", "200ns", "250ns", "300ns"},
 };
 
@@ -85,7 +89,7 @@ void ram4132_setup_pio(uint speed_grade, uint variant)
 {
     get_ram_config(ram4132_stk_chip);
 
-    const uint8_t *delay_set = ram4132_delays[speed_grade];
+    const uint8_t *delay_set = ram4132_delay_sets.list[speed_grade];
 
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(

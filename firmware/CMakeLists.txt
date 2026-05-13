@@ -71,12 +71,27 @@ set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
 target_include_directories(pmemtest PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/shared_storage
 	${CMAKE_CURRENT_LIST_DIR}/logging
+#	${CMAKE_CURRENT_LIST_DIR}/gui
 )
 
 target_sources(pmemtest PRIVATE
     board.c
     config.c
     gui.c
+    gui/st7789.c
+    gui/fonts/sserif13.c;
+    gui/fonts/sserif16.c;
+    gui/fonts/sserif20.c;
+    gui/fonts/widgets16.c;
+    gui/icons/chip_icon.c
+    gui/icons/check_icon.c
+    gui/icons/error_icon.c
+    gui/icons/drum_icon0.c
+    gui/icons/drum_icon1.c
+    gui/icons/drum_icon2.c
+    gui/icons/drum_icon3.c
+    gui/icons/warn_icon.c
+    gui/icons/x_icon.c
     logging/ulog.c
     logging/logging.c
     mem_chip.c
@@ -96,7 +111,6 @@ target_sources(pmemtest PRIVATE
 	shared_storage/tusb_to_fat.c
     shared_storage/shared_storage.c
 	shared_storage/tusb_descriptors.c
-    st7789.c
     xoroshiro64starstar.c
 )
 

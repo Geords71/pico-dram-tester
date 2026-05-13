@@ -1,8 +1,5 @@
-#ifndef _WARN_ICON_H
-#define _WARN_ICON_H
-
 #include <stdint.h>
-#include "st7789.h"
+#include "icondef.h"
 
 // Image: 32 x 32
 uint16_t warn_icon_palette[] = { 0x0000, 0x0410, 0x8410, 0xC618, 0x07FF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
@@ -78,5 +75,3 @@ const uint8_t warn_icon_mask[] = {
 };
 
 const ico_def_t warn_icon = { 32, 32, warn_icon_palette, warn_icon_image, warn_icon_mask };
-
-#endif // _WARN_ICON_H

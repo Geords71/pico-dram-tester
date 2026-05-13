@@ -1,8 +1,5 @@
-#ifndef _X_ICON_H
-#define _X_ICON_H
-
 #include <stdint.h>
-#include "st7789.h"
+#include "icondef.h"
 
 // Image: 32 x 34
 uint16_t x_icon_palette[] = { 0x0000, 0x0010, 0x001F, 0x8410, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 };
@@ -82,5 +79,3 @@ const uint8_t x_icon_mask[] = {
 };
 
 const ico_def_t x_icon = { 32, 34, x_icon_palette, x_icon_image, x_icon_mask };
-
-#endif // _X_ICON_H

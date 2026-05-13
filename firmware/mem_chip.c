@@ -83,7 +83,7 @@ void get_ram_config(mem_chip_t chip) {
         ULOG_INFO("Reading delay values from %s...", filename);
         uint8_t buffer[512] = {"\0"};
 
-        for (uint8_t row=0; row<chip.delay_set_rows; row++) {
+        for (uint8_t row=0; row<chip.delay_sets.len; row++) {
 
             if (f_gets(buffer, sizeof(buffer), &fp) == NULL) {
                 ULOG_INFO("Reached delay file EOF.");
@@ -95,12 +95,12 @@ void get_ram_config(mem_chip_t chip) {
 
             char *token;
             token = strtok(buffer, ",");
-            for (uint8_t col=0; col<chip.delay_set_cols; col++) {
+            for (uint8_t col=0; col<chip.delay_sets.wid; col++) {
                 if (token == NULL) {
                     ULOG_ERROR("Encountered unexpected end of line. Continuing to next...");
                     continue;
                 }
-                chip.delay_sets[row][col] = atoi(token);
+                chip.delay_sets.list[row][col] = atoi(token);
                 token = strtok(NULL, ",");
             }
         }
@@ -115,7 +115,7 @@ void get_ram_config(mem_chip_t chip) {
     unmount_shared_storage();
 }
 
-void ram1b1r_setup_pio(delay_set_t delay_set, uint8_t variant)
+void ram1b1r_setup_pio(const delay_set_t delay_set, uint8_t variant)
 {
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(

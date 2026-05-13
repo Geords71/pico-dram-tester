@@ -23,7 +23,11 @@ typedef struct {
 } mem_chip_variants_t;
 
 typedef uint8_t delay_set_t[MEMCHIP_MAX_DELAY_SET_COLS];
-typedef delay_set_t delay_sets_t[MEMCHIP_MAX_DELAY_SET_ROWS];
+typedef struct {
+    uint8_t len;
+    uint8_t wid;
+    delay_set_t list[MEMCHIP_MAX_DELAY_SET_ROWS];
+} delay_sets_t;
 
 typedef struct {
     void (*setup_pio)(uint speed_grade, uint variant);
@@ -35,9 +39,7 @@ typedef struct {
     const mem_chip_variants_t *variants;
     const char *name;
     const char *timing_family;
-    uint8_t delay_set_rows;
-    uint8_t delay_set_cols;
-    delay_set_t *delay_sets;
+    delay_sets_t delay_sets;
     char *speed_names[];
 } mem_chip_t;
 
@@ -71,7 +73,7 @@ extern void write_ram1b1r_8p_half_hr(int addr, int data);
 extern void write_ram1b1r_8p_half_lc(int addr, int data);
 extern void write_ram1b1r_8p_half_hc(int addr, int data);
 
-extern void ram1b1r_setup_pio(delay_set_t delay_set, uint8_t variant);
+extern void ram1b1r_setup_pio(const delay_set_t delay_set, uint8_t variant);
 extern void ram1b1r_teardown_pio();
 
 extern void get_ram_config(const mem_chip_t chip);

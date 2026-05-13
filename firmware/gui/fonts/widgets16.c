@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include "fontdef.h"
+
 // Pixel height: 16
 const uint8_t widgets16_widths[] = {0, 13, 9, 9};
 const uint16_t widgets16_offsets[] = {0, 0, 32, 64, 96};

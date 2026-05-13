@@ -6,6 +6,8 @@ if(CMAKE_HOST_WIN32)
     set(VENV_PYTHON "${VENV_DIR}/Scripts/python.exe")
 endif()
 
+message(STATUS "Resolved Python3_EXECUTABLE = ${Python3_EXECUTABLE}")
+
 if(NOT EXISTS "${VENV_DIR}")
     execute_process(
         COMMAND ${Python3_EXECUTABLE} -m virtualenv "${VENV_DIR}"

@@ -93,10 +93,6 @@ int main() {
     menu_init();
     menu_main_show();
     
-
-    //ULOG_INFO("Activating Knobs and Buttons...");
-    //init_buttons_encoder();
-
     ULOG_INFO("Pico DRAM Tester reporting for duty!");
 
     uint32_t current_vtable = scb_hw->vtor;

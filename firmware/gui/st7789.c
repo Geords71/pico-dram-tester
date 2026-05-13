@@ -6,8 +6,7 @@
 #include "hardware/spi.h"
 
 #include "st7789.h"
-
-#include "rtc_image.h"
+#include "fonts.h"
 
 #define PIN_SPI_CS 1
 #define PIN_SPI_SCK 2
@@ -356,7 +355,5 @@ void st7789_init()
         st7789_fill(0, count, 100, 1, count << 11); // horizontal line
     }
 #endif
-
-//    st7789_bitblt_rot(0, 0, 240, 135, (uint16_t *)image_data);
 
 }

@@ -3,11 +3,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "gui.h"
+#include "logging/logging.h"
 
-#include "st7789.h"
-#include "sserif20.h"
-#include "widgets16.h"
-
+gui_t gui = {
+    .state = MAIN_MENU,
+};
 
 // Colors for fancy rectangles
 uint16_t color_fill = COLOR_LTGRAY;
@@ -15,6 +15,14 @@ uint16_t color_outline = COLOR_BLACK;
 uint16_t color_shadow = COLOR_DKGRAY;
 uint16_t color_highlight = COLOR_WHITE;
 uint16_t color_field = COLOR_WHITE;
+
+void gui_init() {
+    ULOG_INFO("Initializing LCD Display...");
+    st7789_init();
+
+    ULOG_INFO("Initializing GUI Startup Settings...");
+    gui.state = MAIN_MENU;
+}
 
 // Two-color rectangle
 void shadow_rect(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height, uint16_t tl, uint16_t br)
