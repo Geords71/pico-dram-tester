@@ -74,7 +74,9 @@ extern void write_ram1b1r_8p_half_lc(int addr, int data);
 extern void write_ram1b1r_8p_half_hc(int addr, int data);
 
 extern void ram1b1r_setup_pio(const delay_set_t delay_set, uint8_t variant);
+extern void ram4b1r_setup_pio(const delay_set_t delay_set, uint8_t variant);
 extern void ram1b1r_teardown_pio();
+extern void ram4b1r_teardown_pio();
 
 extern void get_ram_config(const mem_chip_t chip);
 #endif

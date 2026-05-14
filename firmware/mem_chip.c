@@ -4,6 +4,7 @@
 #include "mem_chip.h"
 #include "hardware/pio.h"
 #include "ram1b1r.pio.h"
+#include "ram4b1r.pio.h"
 #include "ff.h"
 #include "shared_storage.h"
 #include "logging.h"
@@ -15,9 +16,12 @@
 #include "ram4816.h"
 #include "ram4132.h"
 #include "ram4164.h"
+#include "ram4408.h"
+#include "ram4416.h"
+#include "ram4464.h"
+#include "ram44256.h"
 #include "ram41128.pio.h"
 #include "ram41256.pio.h"
-#include "ram_4bit.pio.h"
 
 PIO pio;
 uint sm = 0;
@@ -33,7 +37,7 @@ const mem_chip_t *chip_list[NUM_CHIPS] = {
     &ram4164_chip,
     &ram41128_chip,
     &ram41256_chip,
-    &ram4416_half_chip,
+    &ram4408_chip,
     &ram4416_chip,
     &ram4464_chip,
     &ram44256_chip,
@@ -155,10 +159,53 @@ void ram1b1r_setup_pio(const delay_set_t delay_set, uint8_t variant)
     pio_sm_set_enabled(pio, sm, true);
 }
 
+void ram4b1r_setup_pio(const delay_set_t delay_set, uint8_t variant)
+{
+    uint pin = 5;
+    bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
+        get_patched_program(
+            &ram4b1r_program, delay_set, RAM4B1R_DELAY_SET_COLS
+        ),
+        &pio, &sm, &offset, pin, 17, true);
+    
+    // Set up 17 total pins
+    for (uint count = 0; count < 17; count++) {
+        pio_gpio_init(pio, pin + count);
+        gpio_set_slew_rate(pin + count, GPIO_SLEW_RATE_FAST);
+        gpio_set_drive_strength(pin + count, GPIO_DRIVE_STRENGTH_4MA);
+    }
+
+    pio_sm_set_consecutive_pindirs(pio, sm, pin + 4, 17, true); // true=output
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 4, false); // false=input
+
+    pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
+
+    pio_sm_config c = ram4b1r_program_get_default_config(offset);
+
+    sm_config_set_out_pins(&c, pin, 14);
+    sm_config_set_set_pins(&c, pin + 14, 3); // Max is 5.
+    sm_config_set_in_pins(&c, pin);
+
+    // Shift right, Autopull off, 30 bits (1 + 1 + 14 + 14) at a time
+    sm_config_set_out_shift(&c, true, false, 30);
+
+    // Shift left, Autopull on, 4 bits
+    sm_config_set_in_shift(&c, false, false, 4);
+
+    hw_set_bits(&pio->input_sync_bypass, 0xf << pin); //to bypass synchronization on an input
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
 void ram1b1r_teardown_pio()
 {
     pio_sm_set_enabled(pio, sm, false);
     pio_remove_program_and_unclaim_sm(&ram1b1r_program, pio, sm, offset);
+}
+
+void ram4b1r_teardown_pio()
+{
+    pio_sm_set_enabled(pio, sm, false);
+    pio_remove_program_and_unclaim_sm(&ram4b1r_program, pio, sm, offset);
 }
 
 int read_ram1b1r_8p(int addr)

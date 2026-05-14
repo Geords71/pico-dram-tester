@@ -63,7 +63,7 @@ add_dependencies (pmemtest build_fat_image)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41128.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41256.pio)
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram_4bit.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4b1r.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram1b1r.pio)
 
 set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
@@ -105,6 +105,10 @@ target_sources(pmemtest PRIVATE
     ram4116.c
     ram4132.c
     ram4164.c
+    ram4408.c
+    ram4416.c
+    ram4464.c
+    ram44256.c
     ram4816.c
     shared_storage/fat_little_flash.c
     shared_storage/pico_to_fat.c
