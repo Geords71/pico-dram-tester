@@ -1,11 +1,10 @@
-
 #ifndef _FAT_LITTLE_FLASH_H
 #define _FAT_LITTLE_FLASH_H
 
 #include <stdint.h>
 #include <pico/types.h>
 
-#define FAT_BLOCK_NUM          128  // 64KB
+#define FAT_BLOCK_NUM          1025
 #define FAT_BLOCK_SIZE         512
 
 void fat_little_flash_initialize(void);

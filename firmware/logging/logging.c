@@ -23,7 +23,7 @@ char* get_timestamp()
     return timestamp;
 }
 
-#define LOG_BUFFER_SIZE 32  // Max number of entries
+#define LOG_BUFFER_SIZE 64  // Max number of entries
 #define LOG_ENTRY_SIZE  128 // Max chars per entry
  
 static char log_buffer[LOG_BUFFER_SIZE][LOG_ENTRY_SIZE];
