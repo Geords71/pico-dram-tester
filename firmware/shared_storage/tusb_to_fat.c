@@ -42,8 +42,8 @@ void tud_msc_capacity_cb(uint8_t lun,
                          uint16_t* block_size)
 {
     (void) lun;
-    *block_count = FAT_BLOCK_NUM;
-    *block_size  = FAT_BLOCK_SIZE;
+    *block_count = FAT_TOTAL_SECTORS;
+    *block_size  = FAT_SECTOR_SIZE;
 }
 
 bool tud_msc_start_stop_cb(uint8_t lun,
@@ -74,15 +74,15 @@ int32_t tud_msc_read10_cb(uint8_t lun,
 
     while (remaining) {
 
-        if (lba >= FAT_BLOCK_NUM) {
+        if (lba >= FAT_TOTAL_SECTORS) {
             ULOG_WARNING("READ10 out of range: LBA=%u", lba);
             return -1;
         }
 
-        uint8_t sector[FAT_BLOCK_SIZE];
+        uint8_t sector[FAT_SECTOR_SIZE];
         fat_little_flash_read(lba, sector);
 
-        uint32_t chunk = FAT_BLOCK_SIZE - offset;
+        uint32_t chunk = FAT_SECTOR_SIZE - offset;
         if (chunk > remaining)
             chunk = remaining;
 
@@ -116,15 +116,15 @@ int32_t tud_msc_write10_cb(uint8_t lun,
 
     while (remaining) {
 
-        if (lba >= FAT_BLOCK_NUM) {
+        if (lba >= FAT_TOTAL_SECTORS) {
             ULOG_ERROR("WRITE10 out of range: LBA=%u", lba);
             return -1;
         }
 
-        uint8_t sector[FAT_BLOCK_SIZE];
+        uint8_t sector[FAT_SECTOR_SIZE];
         fat_little_flash_read(lba, sector);
 
-        uint32_t chunk = FAT_BLOCK_SIZE - offset;
+        uint32_t chunk = FAT_SECTOR_SIZE - offset;
         if (chunk > remaining)
             chunk = remaining;
 

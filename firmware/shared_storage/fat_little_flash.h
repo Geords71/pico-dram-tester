@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 #include <pico/types.h>
-
-#define FAT_BLOCK_NUM          1025
-#define FAT_BLOCK_SIZE         512
+#include "fat_image.h"
 
 void fat_little_flash_initialize(void);
 bool fat_little_flash_read(int block, uint8_t *buffer);

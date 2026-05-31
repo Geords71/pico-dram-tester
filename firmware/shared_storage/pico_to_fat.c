@@ -18,7 +18,7 @@ DSTATUS disk_initialize(BYTE drv) {
 }
 
 DRESULT disk_read(BYTE drv, BYTE *buff, LBA_t sector, UINT count) {
-    if (sector > FAT_BLOCK_NUM) {
+    if (sector > FAT_TOTAL_SECTORS) {
         return RES_ERROR;
     }
     fat_little_flash_read(sector, (uint8_t *)buff);

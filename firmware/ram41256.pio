@@ -71,12 +71,12 @@ static const delay_sets_t ram41256_delay_sets = {
     .len = RAM41256_DELAY_SET_ROWS,
     .wid = RAM41256_DELAY_SET_COLS,
     .list = {
-        {0, 0, 10, 4,  1,  0,  1,  0},  // 70ns
-        {0, 0, 13, 4,  1,  1,  3,  0},  // 80ns
-        {0, 0, 15, 2,  1,  5,  2,  0},  // 85ns
-        {0, 0, 22, 4,  2,  7,  2,  0},  // 100ns
-        {0, 0, 22, 4,  4,  6,  7,  0},  // 120ns
-        {0, 0, 25, 4,  5,  10, 11, 0},  // 150ns
+        {0, 0, 10, 3,  5,  2,  0, 0},  // 70ns  - interpolated guess
+        {0, 0, 13, 3,  8,  1,  0, 0},  // 80ns  - from TMS data sheet
+        {0, 0, 14, 3, 10,  1,  0, 0},  // 85ns  - interpolated guess
+        {0, 0, 18, 3, 13,  2,  0, 0},  // 100ns - from KM and TMS data sheets
+        {0, 0, 18, 3, 13,  6,  0, 0},  // 120ns - from KM amd TMS data sheets
+        {0, 0, 19, 9, 15,  4,  0, 0},  // 150ns - from TMS data sheet
     },
 };
 

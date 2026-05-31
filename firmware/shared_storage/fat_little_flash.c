@@ -1,5 +1,4 @@
 #include "fat_little_flash.h"
-#include "fat_image_new.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -11,13 +10,9 @@
 #include "pico/multicore.h"
 #include "logging.h"
 
-#define FLASH_FAT_BLOCK_SIZE   4096
 #define FLASH_FAT_OFFSET       0x300000
 #define XIP_FAT_OFFSET         (XIP_BASE + FLASH_FAT_OFFSET)
 #define FAT12_BOOT_SIGNATURE   (0xAA55)
-
-// Use the actual image length, which is 4K-aligned
-#define FLASH_FAT_TOTAL_SIZE   fat_image_new_len
 
 // As-is, where-is!
 #pragma pack(push, 1)
@@ -86,7 +81,7 @@ static void fat_little_flash_reflash(void)
 {
     ULOG_INFO("Reflashing FAT12 image to flash...");
 
-    uint32_t remaining = FLASH_FAT_TOTAL_SIZE;
+    uint32_t remaining = FAT_TOTAL_SIZE;
     uint32_t src_off   = 0;
     uint32_t dst_off   = FLASH_FAT_OFFSET;
 
@@ -97,7 +92,7 @@ static void fat_little_flash_reflash(void)
 
         // Stage one 4KB sector from the header image into RAM
         memcpy(wp.data,
-               fat_image_new_data + src_off,
+               fat_image_data + src_off,
                FLASH_SECTOR_SIZE);
 
         // Erase + program this 4KB sector
@@ -113,7 +108,7 @@ static void fat_little_flash_reflash(void)
 
 void fat_little_flash_initialize(void)
 {
-    fat_boot_sector_t *boot_sector = (fat_boot_sector_t *)(XIP_FAT_OFFSET + FAT_BLOCK_SIZE);
+    fat_boot_sector_t *boot_sector = (fat_boot_sector_t *)(XIP_FAT_OFFSET + FAT_SECTOR_SIZE);
 
     ULOG_INFO("Checking FAT Filesystem...");
     if (boot_sector->boot_signature != FAT12_BOOT_SIGNATURE) {
@@ -170,28 +165,28 @@ void fat_little_flash_initialize(void)
 
 bool fat_little_flash_read(int block, uint8_t *buffer)
 {
-    if (block < 0 || block >= FAT_BLOCK_NUM) {
+    if (block < 0 || block >= FAT_TOTAL_SECTORS) {
         ULOG_ERROR("fat_little_flash_read: block out of range: %d", block);
         return false;
     }
 
     const uint8_t *data =
-        (const uint8_t *)(XIP_BASE + FLASH_FAT_OFFSET + (uint32_t)block * FAT_BLOCK_SIZE);
+        (const uint8_t *)(XIP_BASE + FLASH_FAT_OFFSET + (uint32_t)block * FAT_SECTOR_SIZE);
 
-    memcpy(buffer, data, FAT_BLOCK_SIZE);
+    memcpy(buffer, data, FAT_SECTOR_SIZE);
     return true;
 }
 
 bool fat_little_flash_write(int block, uint8_t *buffer)
 {
-    if (block < 0 || block >= FAT_BLOCK_NUM) {
+    if (block < 0 || block >= FAT_TOTAL_SECTORS) {
         ULOG_ERROR("fat_little_flash_write: block out of range: %d", block);
         return false;
     }
 
     // Which 4KB flash sector contains this 512-byte block?
     uint32_t flash_sector =
-        ((uint32_t)block * FAT_BLOCK_SIZE) / FLASH_SECTOR_SIZE;
+        ((uint32_t)block * FAT_SECTOR_SIZE) / FLASH_SECTOR_SIZE;
 
     write_flash_params_t wp;
     wp.count      = FLASH_SECTOR_SIZE;
@@ -199,7 +194,7 @@ bool fat_little_flash_write(int block, uint8_t *buffer)
 
     // Offset of this 512-byte block within the 4KB sector
     uint32_t sector_offset =
-        ((uint32_t)block * FAT_BLOCK_SIZE) % FLASH_SECTOR_SIZE;
+        ((uint32_t)block * FAT_SECTOR_SIZE) % FLASH_SECTOR_SIZE;
 
     // Stage the entire 4KB sector into RAM BEFORE erase/program
     memcpy(wp.data,
@@ -207,7 +202,7 @@ bool fat_little_flash_write(int block, uint8_t *buffer)
            FLASH_SECTOR_SIZE);
 
     // Patch in the new 512-byte block
-    memcpy(wp.data + sector_offset, buffer, FAT_BLOCK_SIZE);
+    memcpy(wp.data + sector_offset, buffer, FAT_SECTOR_SIZE);
 
     // Erase + program this sector from RAM
     write_flash(&wp);

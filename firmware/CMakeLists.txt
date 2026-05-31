@@ -38,14 +38,20 @@ target_include_directories(fatfs PUBLIC
 )
 
 # Define a target that runs the script
-add_custom_target(build_fat_image
-    COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/scripts/generate_fat_header.py
-        --input-dir="${CMAKE_CURRENT_LIST_DIR}/fat_files"
-        --output-file="${CMAKE_CURRENT_LIST_DIR}/build/fat_image_new.h"
-    COMMENT "Generating FAT Filesystem C Header"
+add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fat_image.c"
+    COMMAND ${VENV_PYTHON} ${CMAKE_SOURCE_DIR}/scripts/generate_fat_image.py
+        --input-dir=${CMAKE_CURRENT_LIST_DIR}/fat_files
+        --output-file=${CMAKE_CURRENT_BINARY_DIR}/fat_image.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/scripts/generate_fat_image.py
+    COMMENT "Generating FAT filesystem image source files"
+    VERBATIM
 )
 
-add_executable(pmemtest)
+add_executable(
+    pmemtest
+    "${CMAKE_CURRENT_BINARY_DIR}/fat_image.c"
+    )
 
 # Help with overclock XIP abd flash writes.
 target_compile_definitions(pmemtest PRIVATE 
@@ -57,8 +63,6 @@ target_compile_definitions(pmemtest PRIVATE
 
 # Optional: Force the compiler to not assume data is in Flash
 target_compile_options(pmemtest PRIVATE -mno-pic-data-is-text-relative)
-
-add_dependencies (pmemtest build_fat_image)
 
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram4132.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/ram41128.pio)

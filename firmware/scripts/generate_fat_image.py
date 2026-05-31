@@ -4,24 +4,24 @@ import struct
 import click
 
 # 512 KB FAT12 volume + MBR
-BYTES_PER_SECTOR    = 512
+FAT_SECTOR_SIZE    = 512
 
 # FAT12 volume size (boot sector + FATs + root + data)
-TOTAL_SECTORS       = 1024      # 1024 * 512 = 512 KB
+FAT_TOTAL_SECTORS       = 1024      # 1024 * 512 = 512 KB
 
 # Add 1 sector for MBR at LBA0
-SECTORS_WITH_MBR    = TOTAL_SECTORS + 1
+FAT_SECTORS_WITH_MBR    = FAT_TOTAL_SECTORS + 1
 
-SECTORS_PER_CLUSTER = 1
-RESERVED_SECTORS    = 1         # boot sector at LBA1
-NUM_FATS            = 2
-ROOT_ENTRIES        = 64
-SECTORS_PER_FAT     = 3
+FAT_SECTORS_PER_CLUSTER = 1
+FAT_RESERVED_SECTORS    = 1         # boot sector at LBA1
+FAT_NUM_FATS            = 2
+FAT_ROOT_ENTRIES        = 64
+FAT_SECTORS_PER_FAT     = 3
 
 # Non-floppy geometry so Windows treats it as a normal USB disk
-SECTORS_PER_TRACK   = 32
-NUM_HEADS           = 4
-MEDIA               = 0xF8      # hard-disk type, not floppy
+FAT_SECTORS_PER_TRACK   = 32
+FAT_NUM_HEADS           = 4
+FAT_MEDIA               = 0xF8      # hard-disk type, not floppy
 
 
 def to_83(name: str) -> bytes:
@@ -46,7 +46,7 @@ def mk_mbr() -> bytearray:
     part[4] = 0x01                     # type = FAT12
     part[5:8] = b"\x00\x00\x00"        # CHS end (ignored)
     struct.pack_into("<I", part, 8, 1)             # LBA start = 1 (boot sector)
-    struct.pack_into("<I", part, 12, TOTAL_SECTORS) # sector count = 1024
+    struct.pack_into("<I", part, 12, FAT_TOTAL_SECTORS) # sector count = 1024
 
     mbr[446:446+16] = part
     mbr[510] = 0x55
@@ -59,16 +59,16 @@ def mk_boot_sector() -> bytearray:
     bs[0:3] = b'\xEB\x3C\x90'
     bs[3:11] = b"MSDOS5.0"
 
-    struct.pack_into("<H", bs, 11, BYTES_PER_SECTOR)
-    bs[13] = SECTORS_PER_CLUSTER
-    struct.pack_into("<H", bs, 14, RESERVED_SECTORS)
-    bs[16] = NUM_FATS
-    struct.pack_into("<H", bs, 17, ROOT_ENTRIES)
-    struct.pack_into("<H", bs, 19, TOTAL_SECTORS)
-    bs[21] = MEDIA
-    struct.pack_into("<H", bs, 22, SECTORS_PER_FAT)
-    struct.pack_into("<H", bs, 24, SECTORS_PER_TRACK)
-    struct.pack_into("<H", bs, 26, NUM_HEADS)
+    struct.pack_into("<H", bs, 11, FAT_SECTOR_SIZE)
+    bs[13] = FAT_SECTORS_PER_CLUSTER
+    struct.pack_into("<H", bs, 14, FAT_RESERVED_SECTORS)
+    bs[16] = FAT_NUM_FATS
+    struct.pack_into("<H", bs, 17, FAT_ROOT_ENTRIES)
+    struct.pack_into("<H", bs, 19, FAT_TOTAL_SECTORS)
+    bs[21] = FAT_MEDIA
+    struct.pack_into("<H", bs, 22, FAT_SECTORS_PER_FAT)
+    struct.pack_into("<H", bs, 24, FAT_SECTORS_PER_TRACK)
+    struct.pack_into("<H", bs, 26, FAT_NUM_HEADS)
     struct.pack_into("<I", bs, 28, 1)  # hidden sectors = 1 (MBR at LBA0)
     struct.pack_into("<I", bs, 32, 0)  # large total sectors (unused for FAT12)
 
@@ -98,31 +98,37 @@ def fat12_set(fat: bytearray, index: int, value: int) -> None:
         fat[byte_index+1] = (fat[byte_index+1] & 0xF0) | ((value >> 8) & 0x0F)
 
 
-def write_c_header(path: str, img: bytes, name: str) -> None:
-    with open(path, "w", newline="\n") as f:
+def write_c_header(img: bytes, name: str, h_path: str, c_path: str) -> None:
+    with open(h_path, "w", newline="\n") as f:
         length = len(img)
-        f.write("#ifndef FAT12_IMAGE_H\n")
-        f.write("#define FAT12_IMAGE_H\n")
-        f.write("#include \"pico.h\"\n\n")
-        f.write(f"// Generated FAT12 image ({length} bytes)\n")
-        f.write(f"const unsigned int {name}_len = {length};\n")
-        f.write(f"const uint8_t __in_flash(\"fat_data\") {name}_data[{length}] = {{\n")
+        f.write( '#ifndef FAT_IMAGE_H\n')
+        f.write( '#define FAT_IMAGE_H\n')
+        f.write(f'#define FAT_SECTOR_SIZE {FAT_SECTOR_SIZE}\n')
+        f.write(f'#define FAT_TOTAL_SECTORS {FAT_TOTAL_SECTORS}\n')
+        f.write(f'#define FAT_TOTAL_SIZE {length}\n')
+        f.write( '#include <stdint.h>\n')
+        f.write( '#include "pico.h"\n\n')
+        f.write(f'extern const uint8_t {name}_data[FAT_TOTAL_SIZE];\n')
+        f.write( '\n#endif // FAT_IMAGE_H\n')
+
+
+    with open(c_path, "w", newline="\n") as f:
+        f.write( '#include <stdint.h>\n')
+        f.write(f'#include "{name}.h"\n\n')
+        f.write(f'// Generated FAT12 image ({length} bytes)\n')
+        f.write(f'const uint8_t __in_flash("fat_data") {name}_data[FAT_TOTAL_SIZE] = {{\n')
 
         for i in range(0, len(img), 16):
             chunk = img[i:i+16]
             hexes = ", ".join(f"0x{b:02X}" for b in chunk)
             f.write(f"    {hexes},\n")
+        f.write("};\n")
 
-        f.write("};\n\n#endif // FAT12_IMAGE_H\n")
 
 
-def build_image(src_dir: str, output_header: str) -> None:
-    split = os.path.splitext(output_header)
-    name = os.path.basename(split[0])
-    image_path = split[0] + ".img"
-
+def build_image(src_dir: str, image_path: str) -> bytearray:
     # Allocate full image: MBR + FAT12 volume
-    img = bytearray(BYTES_PER_SECTOR * SECTORS_WITH_MBR)
+    img = bytearray(FAT_SECTOR_SIZE * FAT_SECTORS_WITH_MBR)
 
     # LBA0 = MBR
     img[0:512] = mk_mbr()
@@ -132,12 +138,12 @@ def build_image(src_dir: str, output_header: str) -> None:
 
     # Layout within the full image (absolute offsets)
     # Volume starts at LBA1
-    root_dir_sectors = ((ROOT_ENTRIES * 32) + (BYTES_PER_SECTOR - 1)) // BYTES_PER_SECTOR
+    root_dir_sectors = ((FAT_ROOT_ENTRIES * 32) + (FAT_SECTOR_SIZE - 1)) // FAT_SECTOR_SIZE
 
-    fat1_off = (1 + RESERVED_SECTORS) * BYTES_PER_SECTOR
-    fat2_off = fat1_off + SECTORS_PER_FAT * BYTES_PER_SECTOR
-    root_off = (1 + RESERVED_SECTORS + NUM_FATS * SECTORS_PER_FAT) * BYTES_PER_SECTOR
-    data_off = root_off + root_dir_sectors * BYTES_PER_SECTOR
+    fat1_off = (1 + FAT_RESERVED_SECTORS) * FAT_SECTOR_SIZE
+    fat2_off = fat1_off + FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE
+    root_off = (1 + FAT_RESERVED_SECTORS + FAT_NUM_FATS * FAT_SECTORS_PER_FAT) * FAT_SECTOR_SIZE
+    data_off = root_off + root_dir_sectors * FAT_SECTOR_SIZE
 
     # For this geometry:
     # LBA1  = boot
@@ -145,18 +151,18 @@ def build_image(src_dir: str, output_header: str) -> None:
     # LBA5-7  = FAT2 (3 sectors)
     # LBA8-11 = root (4 sectors)
     # LBA12+  = data
-    assert data_off == 12 * BYTES_PER_SECTOR
+    assert data_off == 12 * FAT_SECTOR_SIZE
     assert data_off <= len(img)
 
     # FAT buffer (one FAT; mirrored into FAT2)
-    fat = bytearray(SECTORS_PER_FAT * BYTES_PER_SECTOR)
+    fat = bytearray(FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE)
     # Reserved clusters 0 and 1
-    fat[0] = MEDIA
+    fat[0] = FAT_MEDIA
     fat[1] = 0xFF
     fat[2] = 0xFF
 
     next_free_cluster = 2
-    cluster_size = BYTES_PER_SECTOR * SECTORS_PER_CLUSTER
+    cluster_size = FAT_SECTOR_SIZE * FAT_SECTORS_PER_CLUSTER
     root_ptr = root_off
 
     # Files
@@ -181,7 +187,7 @@ def build_image(src_dir: str, output_header: str) -> None:
             continue
 
         print(f"FILE {entry}: size={size}, clusters={clusters}")
-        max_clusters = (SECTORS_PER_FAT * BYTES_PER_SECTOR * 2) // 3  # FAT12 entries
+        max_clusters = (FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE * 2) // 3  # FAT12 entries
         assert next_free_cluster < max_clusters, "FAT full: too many files/data"
 
         # FAT chain
@@ -222,8 +228,8 @@ def build_image(src_dir: str, output_header: str) -> None:
     with open(image_path, "wb") as f:
         f.write(img)
 
-    write_c_header(output_header, img, name)
-    print(f"Wrote C header {output_header} with FAT12+MBR image ({len(img)} bytes)")
+    return img
+
 
 
 @click.command()
@@ -232,7 +238,16 @@ def build_image(src_dir: str, output_header: str) -> None:
 @click.option("--output-file", type=str, required=True,
               help="Absolute path to output header file.")
 def cli(input_dir, output_file):
-    build_image(input_dir, output_file)
+    path_no_ext = os.path.splitext(output_file)
+    name = os.path.basename(path_no_ext[0])
+    image_path = path_no_ext[0] + ".img"
+    h_path = path_no_ext[0] + ".h"
+    c_path = path_no_ext[0] + ".c"
+
+    img = build_image(input_dir, image_path)
+    write_c_header(img, name, h_path, c_path)
+    print( "Wrote FAT12+MBR image .h and .c files")
+    print(f"Raw image is {len(img)} bytes.")
 
 
 if __name__ == "__main__":
