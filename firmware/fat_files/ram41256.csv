@@ -1,0 +1,6 @@
+0, 0, 10, 3,  5,  2,  0, 0,  70ns - interpolated guess
+0, 0, 13, 3,  8,  1,  0, 0,  80ns - from TMS data sheet
+0, 0, 14, 3, 10,  1,  0, 0,  85ns - interpolated guess
+0, 0, 18, 3, 13,  2,  0, 0, 100ns - from KM and TMS data sheets
+0, 0, 18, 3, 13,  6,  0, 0, 120ns - from KM amd TMS data sheets
+0, 0, 19, 9, 15,  4,  0, 0, 150ns - from TMS data sheet

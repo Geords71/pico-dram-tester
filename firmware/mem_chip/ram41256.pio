@@ -1,0 +1,68 @@
+;
+; 41256 Test Program
+;
+
+; Pin Assignments
+; SP0  = A0
+; SP1  = A1
+; SP2  = A2
+; SP3  = A3
+; SP4  = A4
+; SP5  = A5
+; SP6  = A6
+; SP7  = A7
+; SP8  = A8
+; SP9  = D
+; SP10 = WE#
+; SP11 = RAS#
+; SP12 = CAS#
+; SP13 = nc
+; SP14 = nc
+; SP15 = nc
+; SP16 = Q
+
+; set pins: CAS, RAS, WR.
+.pio_version 0 // only requires PIO version 0
+.program ram41256
+main:
+    jmp begin
+full_transfer:
+    nop [1]
+    nop [2]
+    out pins, 9
+    set pins, 0b101
+    nop [3]
+cas_only_transfer:
+    out pins, 10
+    jmp !x skip_wr
+    set pins, 0b000
+    jmp skip_wr2
+skip_wr:
+    set pins, 0b001
+    nop
+skip_wr2:
+    mov OSR, NULL
+    nop [4]
+    set pins, 0b001
+    out pins, 10
+    nop [5]
+    in pins, 1
+    set pins, 0b101
+    push noblock
+    nop [6]
+    jmp !y begin
+    jmp skip_ras
+begin:
+    set pins, 0b111
+skip_ras:
+    pull block
+    out y, 1
+    out x, 1
+    jmp !y full_transfer
+    out NULL, 9 [7]
+    jmp cas_only_transfer
+
+
+% c-sdk {
+#define RAM41256_DELAY_SET_COLS 8
+%}

@@ -16,7 +16,7 @@ FAT_SECTORS_PER_CLUSTER = 1
 FAT_RESERVED_SECTORS    = 1         # boot sector at LBA1
 FAT_NUM_FATS            = 2
 FAT_ROOT_ENTRIES        = 64
-FAT_SECTORS_PER_FAT     = 3
+FAT_SECTORS_PER_FAT     = 4         # ← you increased this from 3 → 4
 
 # Non-floppy geometry so Windows treats it as a normal USB disk
 FAT_SECTORS_PER_TRACK   = 32
@@ -137,7 +137,6 @@ def build_image(src_dir: str, image_path: str) -> bytearray:
     img[512:1024] = mk_boot_sector()
 
     # Layout within the full image (absolute offsets)
-    # Volume starts at LBA1
     root_dir_sectors = ((FAT_ROOT_ENTRIES * 32) + (FAT_SECTOR_SIZE - 1)) // FAT_SECTOR_SIZE
 
     fat1_off = (1 + FAT_RESERVED_SECTORS) * FAT_SECTOR_SIZE
@@ -145,17 +144,18 @@ def build_image(src_dir: str, image_path: str) -> bytearray:
     root_off = (1 + FAT_RESERVED_SECTORS + FAT_NUM_FATS * FAT_SECTORS_PER_FAT) * FAT_SECTOR_SIZE
     data_off = root_off + root_dir_sectors * FAT_SECTOR_SIZE
 
-    # For this geometry:
-    # LBA1  = boot
-    # LBA2-4  = FAT1 (3 sectors)
-    # LBA5-7  = FAT2 (3 sectors)
-    # LBA8-11 = root (4 sectors)
-    # LBA12+  = data
-    assert data_off == 12 * FAT_SECTOR_SIZE
-    assert data_off <= len(img)
+    # --- ASSERTION 1: Layout must match geometry ---
+    expected = (1 + FAT_RESERVED_SECTORS +
+                FAT_NUM_FATS * FAT_SECTORS_PER_FAT +
+                root_dir_sectors) * FAT_SECTOR_SIZE
+    assert data_off == expected, "FAT layout miscalculated — geometry inconsistent"
+
+    # --- ASSERTION 2: Data region must fit inside image ---
+    assert data_off <= len(img), "Data offset beyond end of image"
 
     # FAT buffer (one FAT; mirrored into FAT2)
     fat = bytearray(FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE)
+
     # Reserved clusters 0 and 1
     fat[0] = FAT_MEDIA
     fat[1] = 0xFF
@@ -187,7 +187,9 @@ def build_image(src_dir: str, image_path: str) -> bytearray:
             continue
 
         print(f"FILE {entry}: size={size}, clusters={clusters}")
-        max_clusters = (FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE * 2) // 3  # FAT12 entries
+
+        # --- ASSERTION 3: FAT must have enough entries ---
+        max_clusters = (FAT_SECTORS_PER_FAT * FAT_SECTOR_SIZE * 2) // 3
         assert next_free_cluster < max_clusters, "FAT full: too many files/data"
 
         # FAT chain
@@ -216,6 +218,10 @@ def build_image(src_dir: str, image_path: str) -> bytearray:
         struct.pack_into("<I", ent, 28, size)
         img[root_ptr:root_ptr+32] = ent
         root_ptr += 32
+
+    # --- ASSERTION 4: Root directory must not overflow ---
+    assert root_ptr <= root_off + root_dir_sectors * FAT_SECTOR_SIZE, \
+        "Root directory overflow: too many files for FAT_ROOT_ENTRIES"
 
     # Mirror FAT into both copies
     img[fat1_off:fat1_off+len(fat)] = fat
@@ -246,7 +252,7 @@ def cli(input_dir, output_file):
 
     img = build_image(input_dir, image_path)
     write_c_header(img, name, h_path, c_path)
-    print( "Wrote FAT12+MBR image .h and .c files")
+    print("Wrote FAT12+MBR image .h and .c files")
     print(f"Raw image is {len(img)} bytes.")
 
 

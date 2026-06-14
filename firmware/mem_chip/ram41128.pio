@@ -1,0 +1,74 @@
+;
+; 41128 Test Program
+;
+
+; Pin Assignments
+; SP0  = A0
+; SP1  = A1
+; SP2  = A2
+; SP3  = A3
+; SP4  = A4
+; SP5  = A5
+; SP6  = A6
+; SP7  = A7
+; SP8  = D
+; SP9  = WE#
+; SP10 = RAS1#
+; SP11 = RAS2#
+; SP12 = CAS#
+; SP13 = nc
+; SP14 = nc
+; SP15 = nc
+; SP16 = Q
+
+; Timing values (nameplate, tRAC): 100ns, 120ns, 150ns, 200ns, 300ns
+
+; set pins: CAS, RAS2, RAS1, WR.
+; Combos: 1111 (all high) 1101 (ras low) 0100 (ras, cas, wr low) 0101 (ras, cas low).
+; Alt                     1011 (ras low) 0010 (ras, cas, wr low) 0011 (ras, cas low).
+.pio_version 0 // only requires PIO version 0
+.program ram41128
+begin:
+    set pins, 0b1111
+    pull block
+    out y, 1 [1]
+    out x, 1 [2]
+    out pins, 8
+    jmp !y ras1_transfer
+ras2_transfer:
+    set pins, 0b1011 [3]
+    out pins, 9
+    jmp !x skip_wr3
+    set pins, 0b0010
+    jmp skip_wr4
+skip_wr3:
+    set pins, 0b0011
+    nop
+skip_wr4:
+    mov OSR, NULL [4]
+    set pins, 0b0011
+    out pins, 9 [5]
+    in pins, 1
+    set pins, 0b1011 [6]
+    jmp begin
+ras1_transfer:
+    set pins, 0b1101 [3]
+    out pins, 9
+    jmp !x skip_wr
+    set pins, 0b0100
+    jmp skip_wr2
+skip_wr:
+    set pins, 0b0101
+    nop
+skip_wr2:
+    mov OSR, NULL [4]
+    set pins, 0b0101
+    out pins, 9 [5]
+    in pins, 1
+    set pins, 0b1101 [6]
+    jmp begin
+
+
+% c-sdk {
+#define RAM41128_DELAY_SET_COLS 7
+%}

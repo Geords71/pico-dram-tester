@@ -1,79 +1,12 @@
-;
-; 41128 Test Program
-;
 
-; Pin Assignments
-; SP0  = A0
-; SP1  = A1
-; SP2  = A2
-; SP3  = A3
-; SP4  = A4
-; SP5  = A5
-; SP6  = A6
-; SP7  = A7
-; SP8  = D
-; SP9  = WE#
-; SP10 = RAS1#
-; SP11 = RAS2#
-; SP12 = CAS#
-; SP13 = nc
-; SP14 = nc
-; SP15 = nc
-; SP16 = Q
-
-; Timing values (nameplate, tRAC): 100ns, 120ns, 150ns, 200ns, 300ns
-
-; set pins: CAS, RAS2, RAS1, WR.
-; Combos: 1111 (all high) 1101 (ras low) 0100 (ras, cas, wr low) 0101 (ras, cas low).
-; Alt                     1011 (ras low) 0010 (ras, cas, wr low) 0011 (ras, cas low).
-.pio_version 0 // only requires PIO version 0
-.program ram41128
-begin:
-    set pins, 0b1111   ; 158.4 raise RAS#. tRAS=151.8ns  ES39.  = 3.3*37=122.1ns
-    pull block        ; 161.7 Wait for new data to arrive ES40
-    out y, 1 [1]         ; 165.0 get first bit which tells us which row line to use ES41
-    out x, 1 [2]         ; 168.3 get second bit which tells us if we are in write mode. ES42
-    out pins, 8          ; Load row address
-    jmp !y ras1_transfer ; 171.6 ES43
-ras2_transfer:
-    set pins, 0b1011 [3] ; Lower RAS#
-    out pins, 9
-    jmp !x skip_wr3
-    set pins, 0b0010 ; Lower CAS#, WR#
-    jmp skip_wr4
-skip_wr3:
-    set pins, 0b0011 ; Lower CAS#
-    nop
-skip_wr4:
-    mov OSR, NULL [4] ; Clear OSR
-    set pins, 0b0011 ; Raise WR#
-    out pins, 9 [5]  ; Clear addr+data
-    in pins, 1
-    set pins, 0b1011 [6] ; Raise CAS#
-    jmp begin
-ras1_transfer:        ; (delay val at end of instr)
-    set pins, 0b1101 [3]   ; 6.6    Lower RAS#
-    out pins, 9
-    jmp !x skip_wr
-    set pins, 0b0100  ; Lower CAS#, WR#
-    jmp skip_wr2
-skip_wr:
-    set pins, 0b0101  ; Lower CAS#
-    nop
-skip_wr2:
-    mov OSR, NULL [4] ; Clear OSR
-    set pins, 0b0101 ; Raise WR#
-    out pins, 9 [5]  ; Clear addr+data
-    in pins, 1
-    set pins, 0b1101 [6] ; Raise CAS#
-    jmp begin
-
-
-% c-sdk {
-// Original delay numbers are 27, 5, 3, 13, 9
+#include <stdint.h>
+#include "pico/types.h"
+#include "mem_chip.h"
+#include "ram41128.h"
+#include "ram41128.pio.h"
 #define RAM41128_DELAY_SET_ROWS 4
-#define RAM41128_DELAY_SET_COLS 7
 #define GPIO_LED 25
+
 static const delay_sets_t ram41128_delay_sets = {
     .len = RAM41128_DELAY_SET_ROWS,
     .wid = RAM41128_DELAY_SET_COLS,
@@ -146,16 +79,7 @@ void ram41128_ram_write(int addr, int data)
 }
 
 // Routines to set up and tear down the PIO program (and the RAM test)
-void ram41128_setup_pio(uint speed_grade, uint variant)
-{
-    uint pin = 5;
-    set_current_pio_program(&ram41128_program);
-    // Patches the program with the correct delay values
-    pio_patch_delays(ram41128_delay_sets.list[speed_grade], RAM41128_DELAY_SET_COLS);
-    bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(get_current_pio_program(), &pio, &sm, &offset, pin, 17, true);
-    ram41128_program_init(pio, sm, offset, pin);
-    pio_sm_set_enabled(pio, sm, true);
-}
+void ram41128_setup_pio(uint speed_grade, uint variant);
 
 void ram41128_teardown_pio()
 {
@@ -164,14 +88,34 @@ void ram41128_teardown_pio()
 }
 
 // This RAM chip configuration
-static const mem_chip_t ram41128_chip = { .setup_pio = ram41128_setup_pio,
-                                          .teardown_pio = ram41128_teardown_pio,
-                                          .ram_read = ram41128_ram_read,
-                                          .ram_write = ram41128_ram_write,
-                                          .mem_size = 131072, // 131072
-                                          .bits = 1,
-                                          .variants = NULL,
-                                          .delay_sets = ram41128_delay_sets,
-                                          .name = "41128 (128Kx1)",
-                                          .speed_names = {"120ns", "150ns", "200ns", "250ns"} };
-%}
+const mem_chip_t ram41128_chip = {
+    .setup_pio = ram41128_setup_pio,
+    .teardown_pio = ram41128_teardown_pio,
+    .ram_read = ram41128_ram_read,
+    .ram_write = ram41128_ram_write,
+    .mem_size = 131072, // 131072
+    .bits = 1,
+    .variants = NULL,
+    .delay_sets = ram41128_delay_sets,
+    .name = "41128 (128Kx1)",
+    .timing_family = "ram41128",
+    .speed_names = {"120ns", "150ns", "200ns", "250ns"}
+};
+
+void ram41128_setup_pio(uint speed_grade, uint variant)
+{
+    get_ram_config(ram41128_chip);
+    const uint8_t *delay_set = ram41128_delay_sets.list[speed_grade];
+
+    uint pin = 5;
+
+    bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
+        get_patched_program(
+            &ram41128_program, delay_set, RAM41128_DELAY_SET_COLS
+        ),
+        &pio, &sm, &offset, pin, 17, true
+    );
+
+    ram41128_program_init(pio, sm, offset, pin);
+    pio_sm_set_enabled(pio, sm, true);
+}

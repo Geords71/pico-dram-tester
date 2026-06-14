@@ -10,18 +10,18 @@
 #include "logging.h"
 
 // Defined RAM pio programs
-#include "ram4027.h"
-#include "ram4108.h"
-#include "ram4116.h"
-#include "ram4816.h"
-#include "ram4132.h"
-#include "ram4164.h"
-#include "ram4408.h"
-#include "ram4416.h"
-#include "ram4464.h"
-#include "ram44256.h"
-#include "ram41128.pio.h"
-#include "ram41256.pio.h"
+#include "mem_chip/ram4027.h"
+#include "mem_chip/ram4108.h"
+#include "mem_chip/ram4116.h"
+#include "mem_chip/ram4816.h"
+#include "mem_chip/ram4132.h"
+#include "mem_chip/ram4164.h"
+#include "mem_chip/ram41256.h"
+#include "mem_chip/ram4408.h"
+#include "mem_chip/ram4416.h"
+#include "mem_chip/ram4464.h"
+#include "mem_chip/ram44256.h"
+#include "mem_chip/ram41128.h"
 
 PIO pio;
 uint sm = 0;
