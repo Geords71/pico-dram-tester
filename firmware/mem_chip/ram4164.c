@@ -71,7 +71,7 @@ mem_chip_t ram4164_half_chip = {
     .bits = 1,
     .variants = &ram4164_half_chip_variants,
     .name = "4132 (32Kx1 use 4164skt)",
-    .timing_family = "ram4132",
+    .timing_family = "ram4164",
     .delay_sets = ram4164_delay_sets,
     .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}
 };

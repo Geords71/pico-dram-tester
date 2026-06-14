@@ -77,7 +77,7 @@ def mk_boot_sector() -> bytearray:
     bs[37] = 0x00
     bs[38] = 0x29
     struct.pack_into("<I", bs, 39, 0x12345678)
-    bs[43:54] = b"NO NAME    "
+    bs[43:54] = b"PICO FLASH "
     bs[54:62] = b"FAT12   "
 
     bs[510] = 0x55
@@ -235,7 +235,6 @@ def build_image(src_dir: str, image_path: str) -> bytearray:
         f.write(img)
 
     return img
-
 
 
 @click.command()

@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "pico/types.h"
 #include "hardware/pio.h"
-#include "pio_patcher.h"
 #include "ram1b1r.pio.h"
 
 #define NUM_CHIPS 13

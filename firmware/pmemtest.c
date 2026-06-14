@@ -1,12 +1,9 @@
-// Main entry point
-
 // TODO:
 // Make the refresh test fancier
 // Bug fix the 41128
 
 #include <stdio.h>
 #include <stdint.h>
-#include "hardware/pio.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "tusb.h"
@@ -14,7 +11,6 @@
 #include "config.h"
 #include "logging/logging.h"
 #include "menu.h"
-#include "pio_patcher.h"
 #include "queue.h"
 #include "shared_storage/fat_little_flash.h"
 
@@ -87,7 +83,6 @@ int main() {
 
     // Second core will wait for the call queue.
     multicore_launch_core1(core1_entry);
-
 
     ULOG_INFO("Initializing Main Menu...");
     menu_init();
