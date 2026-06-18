@@ -85,8 +85,8 @@ int main() {
     multicore_launch_core1(core1_entry);
 
     ULOG_INFO("Initializing Main Menu...");
-    menu_init();
-    menu_main_show();
+    menu_init_new();
+    //menu_main_show();
     
     ULOG_INFO("Pico DRAM Tester reporting for duty!");
 
@@ -97,8 +97,7 @@ int main() {
 
     ULOG_INFO("Entering Main Program Loop...");
     while(1) {
-        do_menu_wheel();
-        do_menu_buttons();
+        do_inputs();
         do_menu_status();
         flush_logging();
         tud_task();

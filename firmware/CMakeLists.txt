@@ -84,6 +84,7 @@ target_include_directories(pmemtest PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/shared_storage
 	${CMAKE_CURRENT_LIST_DIR}/logging
  	${CMAKE_CURRENT_LIST_DIR}/mem_chip
+ 	${CMAKE_CURRENT_LIST_DIR}/screen
 )
 
 target_sources(pmemtest PRIVATE
@@ -123,6 +124,8 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram4464.c
     mem_chip/ram44256.c
     mem_chip/ram4816.c
+    screen/start_screen.c
+    screen/variant_screen.c
     shared_storage/fat_little_flash.c
     shared_storage/pico_to_fat.c
 	shared_storage/tusb_to_fat.c

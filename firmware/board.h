@@ -13,8 +13,8 @@ extern void board_init();
 extern void board_ram_power_on();
 extern void board_ram_power_off();
 
-extern bool board_encoder_button_pushed();
-extern bool board_back_button_pushed();
+extern bool board_encoder_pushed();
+extern bool board_back_pushed();
 
 #define BOARD_ENCODER_ROTATION_NONE 0
 #define BOARD_ENCODER_ROTATION_CLOCKWISE 1

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "hardware/timer.h"
 #include "pico/util/queue.h"
-#include "gui.h"
 #include "menu.h"
 #include "board.h"
 #include "config.h"
@@ -9,7 +8,9 @@
 #include "mem_chip.h"
 #include "mem_tests.h"
 #include "queue.h"
+#include "menu.h"
 
+#include "screen/start_screen.h"
 
 #define MAIN_MENU_ITEMS 16
 char *main_menu_items[MAIN_MENU_ITEMS];
@@ -17,6 +18,8 @@ gui_listbox_t *cur_menu;
 gui_listbox_t main_menu = {7, 40, 220, MAIN_MENU_ITEMS, 4, 0, 0, main_menu_items};
 gui_listbox_t variants_menu = {7, 40, 220, 0, 4, 0, 0, 0};
 gui_listbox_t speed_menu = {7, 40, 220, 0, 4, 0, 0, 0};
+
+menu_t *cur_screen;
 
 void menu_init()
 {
@@ -66,32 +69,6 @@ void menu_speed_show()
 }
 
 
-void menu_scroll_down()
-{
-    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
-        gui_listbox(cur_menu, LIST_ACTION_DOWN);
-    }
-}
-
-void menu_scroll_up()
-{
-    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
-        gui_listbox(cur_menu, LIST_ACTION_UP);
-    }
-}
-
-void do_menu_wheel() {
-    switch (do_board_encoder()) {
-        case BOARD_ENCODER_ROTATION_CLOCKWISE:
-            menu_scroll_down();
-            break;
-        case BOARD_ENCODER_ROTATION_ANTICLOCKWISE:
-            menu_scroll_up();
-            break;
-        default:
-            break;
-    }
-}
 
 #define CELL_STAT_X 9
 #define CELL_STAT_Y 33
@@ -389,8 +366,62 @@ void menu_back()
     }
 }
 
-void do_menu_buttons()
+void menu_scroll_down()
 {
-    if (board_encoder_button_pushed()) menu_select();
-    if (board_back_button_pushed()) menu_back();
+    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
+        gui_listbox(cur_menu, LIST_ACTION_DOWN);
+    }
+}
+
+void menu_scroll_up()
+{
+    if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
+        gui_listbox(cur_menu, LIST_ACTION_UP);
+    }
+}
+
+void do_menu_wheel() {
+    switch (do_board_encoder()) {
+        case BOARD_ENCODER_ROTATION_CLOCKWISE:
+            menu_scroll_down();
+            break;
+        case BOARD_ENCODER_ROTATION_ANTICLOCKWISE:
+            menu_scroll_up();
+            break;
+        default:
+            break;
+    }
+}
+
+void menu_init_new()
+{
+    ULOG_INFO("Initializing GUI...");
+    gui_init();
+
+    cur_screen = &start_screen.base;
+    cur_screen->enter(cur_screen, 0);
+}
+
+
+void do_inputs()
+{
+    if (board_encoder_pushed()) {
+        cur_screen = cur_screen->do_encoder_pushed();
+    }
+
+    if (board_back_pushed()) {
+        cur_screen = cur_screen->do_back_pushed();
+    }
+
+    switch (do_board_encoder()) {
+        case BOARD_ENCODER_ROTATION_CLOCKWISE:
+            cur_screen = cur_screen->do_encoder_clockwise();
+            break;
+        case BOARD_ENCODER_ROTATION_ANTICLOCKWISE:
+            cur_screen = cur_screen->do_encoder_anticlockwise();
+            break;
+        default:
+            break;
+    }
+
 }

@@ -2,6 +2,7 @@
 #define _GUI_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "gui/icons.h"
 #include "gui/fonts.h"
 #include "gui/st7789.h"

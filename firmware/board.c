@@ -86,12 +86,12 @@ bool board_button_pushed(pin_debounce_t *pin_b)
     return false;
 }
 
-bool board_encoder_button_pushed() {
+bool board_encoder_pushed() {
     static pin_debounce_t quad_btn_debounce = {GPIO_QUAD_BTN, 0};
     return board_button_pushed(&quad_btn_debounce);
 }
 
-bool board_back_button_pushed() {
+bool board_back_pushed() {
     static pin_debounce_t back_btn_debounce = {GPIO_BACK_BTN, 0};
     return board_button_pushed(&back_btn_debounce);
 }
