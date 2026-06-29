@@ -15,35 +15,6 @@
 #include "shared_storage/fat_little_flash.h"
 
 
-void __no_inline_not_in_flash_func(busy_wait_ram)(uint32_t ms) {
-    // Each loop is roughly 10-20 cycles. 
-    // At 150MHz (Pico 2), this is a "human perceivable" delay.
-    for (volatile uint32_t i = 0; i < ms * 10000; i++) {
-        __asm("nop");
-    }
-}
-
-// Entry point for second core. This is just a generic
-// function dispatcher lifted from the Raspberry Pi example code.
-void __no_inline_not_in_flash_func(core1_entry)() {
-
-    queue_entry_t entry;
-    int32_t result = 0;
-    while (true) {
-        // Function pointer is passed to us via the queue_entry_t which also
-        // contains the function parameter.
-        if(queue_try_remove(&call_queue, &entry)) {
-            // We provide an int32_t return value by simply pushing it back on the
-            // return queue which also indicates the result is ready.
-            result = entry.func(entry.mem_chip);
-            queue_try_add(&results_queue, &result);
-        } else {
-            busy_wait_ram(100);
-        };
-
-    }
-}
-
 int main() {
     init_logging();
     ULOG_INFO("Configured Logging...");
@@ -75,18 +46,8 @@ int main() {
     ULOG_INFO("Setting up board...");
     board_init();
 
-    // Set up second core
-    ULOG_INFO("Setting up second ARM core (to run chip tests)...");
-    queue_init(&call_queue, sizeof(queue_entry_t), 2);
-    queue_init(&results_queue, sizeof(int32_t), 2);
-    queue_init(&stat_cur_test, sizeof(int), 2);
-
-    // Second core will wait for the call queue.
-    multicore_launch_core1(core1_entry);
-
     ULOG_INFO("Initializing Main Menu...");
-    menu_init_new();
-    //menu_main_show();
+    menu_init();
     
     ULOG_INFO("Pico DRAM Tester reporting for duty!");
 
@@ -97,8 +58,7 @@ int main() {
 
     ULOG_INFO("Entering Main Program Loop...");
     while(1) {
-        do_inputs();
-        do_menu_status();
+        screen_task();
         flush_logging();
         tud_task();
     }

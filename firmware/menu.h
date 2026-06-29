@@ -4,23 +4,17 @@
 #include <stdbool.h>
 #include "gui.h"
 
-typedef struct menu_t
-{
-    gui_listbox_t listbox;
-    void (*enter)(struct menu_t *, uint16_t); 
-    struct menu_t * (*do_encoder_pushed)(); 
-    struct menu_t * (*do_back_pushed)();
-    struct menu_t * (*do_encoder_clockwise)();
-    struct menu_t * (*do_encoder_anticlockwise)();
-    bool _ready;
-    struct menu_t *_parent;
-    void (*_show)();
+typedef struct menu_t {
+    void (*enter)(struct menu_t *parent);
+    struct menu_t *(*do_encoder_pushed)();
+    struct menu_t *(*do_back_pushed)();
+    struct menu_t *(*do_encoder_clockwise)();
+    struct menu_t *(*do_encoder_anticlockwise)();
+    struct menu_t *(*do_tasks)();
+    struct menu_t *parent;
 } menu_t;
 
 extern void menu_init();
-extern void menu_init_new();
-extern void menu_main_show();
-extern void do_inputs();
-extern void do_menu_status();
+extern void screen_task();
 
 #endif

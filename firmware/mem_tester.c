@@ -18,37 +18,37 @@ typedef struct {
     int32_t inc;
     uint32_t failed_bits;   // bitmask of failed bit tests
     uint32_t cur_bit;
-} marchb_ctx_t;
-static marchb_ctx_t marchb_ctx;
+} marchb_self.t;
+static marchb_self.t marchb_self.
 
 void init_marchb()
 {
-    marchb_ctx.phase = MARCH_PHASE_M0;
-    marchb_ctx.descending = false;
-    marchb_ctx.cur_addr = 0;
-    marchb_ctx.inc = 1;
-    marchb_ctx.failed_bits = 0;
-    marchb_ctx.cur_bit = 0;
+    marchb_self.phase = MARCH_PHASE_M0;
+    marchb_self.descending = false;
+    marchb_self.cur_addr = 0;
+    marchb_self.inc = 1;
+    marchb_self.failed_bits = 0;
+    marchb_self.cur_bit = 0;
 }
 
 typedef struct {
     int32_t cur_addr;
     uint value;
-} psrandom_ctx_t;
-static psrandom_ctx_t psrandom_ctx;
+} psrandom_self.t;
+static psrandom_self.t psrandom_self.
 
 void init_psrandom() {
-    psrandom_ctx.cur_addr = 0;
-    psrandom_ctx.value = 0;
+    psrandom_self.cur_addr = 0;
+    psrandom_self.value = 0;
 }
 
 typedef struct {
     int32_t cur_addr;
-} refresh_ctx_t;
-static refresh_ctx_t refresh_ctx;
+} refresh_self.t;
+static refresh_self.t refresh_self.
 
 void init_refresh() {
-    refresh_ctx.cur_addr = 0;
+    refresh_self.cur_addr = 0;
 }
     
 typedef enum {
@@ -66,18 +66,18 @@ typedef struct {
     uint32_t final_result;
     bool running;
 
-} mem_tests_ctx_t;
-static mem_tests_ctx_t ctx;
+} mem_tests_self.t;
+static mem_tests_self.t self.
 
 void init_ram_tests(mem_chip_t *mem_chip, uint8_t speed_grade, uint8_t variant)
 {
 
-    ctx.mem_chip = mem_chip;
-    ctx.running = false;
-    ctx.phase = RAM_TEST_PHASE_SLEEP;
-    ctx.final_result = 0;
+    self.mem_chip = mem_chip;
+    self.running = false;
+    self.phase = RAM_TEST_PHASE_SLEEP;
+    self.final_result = 0;
 
-    ctx.mem_chip->setup_pio(speed_grade, variant);
+    self.mem_chip->setup_pio(speed_grade, variant);
 
     init_marchb();
     init_psrandom();
@@ -86,55 +86,44 @@ void init_ram_tests(mem_chip_t *mem_chip, uint8_t speed_grade, uint8_t variant)
 
 void start_ram_tests() {
     board_ram_power_on();
-    ctx.running = true;
+    self.running = true;
 }
 
 void do_ram_tests()
 {
-    if (!ctx.running) return;
+    if (!self.running) return;
 }
 
 void stop_ram_tests() {
-    ctx.running = false;
-    ctx.mem_chip->teardown_pio();
+    self.running = false;
+    self.mem_chip->teardown_pio();
     board_ram_power_off();
 }*/
 
 #include <stdint.h>
 #include <stdlib.h>
 #include "xoroshiro64starstar.h"
-#include "queue.h"
+#include "pico/multicore.h"
+//#include "queue.h"
 #include "mem_chip.h"
+#include "mem_tester.h"
 #include "logging/logging.h"
 
-typedef struct {
-    const mem_chip_t *chip;                                
-//    ram_test_phase_t phase; 
- //   uint32_t final_result;
- //   bool running;
 
-} mem_tests_ctx_t;
-static mem_tests_ctx_t ctx;
-
-// Status shared variables between cores. Not really thread safe but this
-// status is unimportant.
-volatile int stat_cur_addr;
-volatile int stat_old_addr;
-volatile int stat_cur_bit;
-volatile int stat_cur_subtest;
+static mem_tester_t self;
 
 static uint ram_bit_mask;
 
 // Wrapper that just calls the read routine for the selected chip
 static int __no_inline_not_in_flash_func(ram_read)(int addr)
 {
-    return ctx.chip->ram_read(addr);
+    return self.chip->ram_read(addr);
 }
 
 // Wrapper that just calls the write routine for the selected chip
 static void __no_inline_not_in_flash_func(ram_write)(int addr, int data)
 {
-    ctx.chip->ram_write(addr, data);
+    self.chip->ram_write(addr, data);
 }
 
 // Low level routines for march-b algorithm
@@ -191,35 +180,35 @@ static bool __no_inline_not_in_flash_func(marchb_m4)(int a)
 static bool __no_inline_not_in_flash_func(march_element)(bool descending, int algorithm)
 {
     int inc = descending ? -1 : 1;
-    int start = descending ? (ctx.chip->mem_size - 1) : 0;
-    int end = descending ? -1 : ctx.chip->mem_size;
+    int start = descending ? (self.chip->mem_size - 1) : 0;
+    int end = descending ? -1 : self.chip->mem_size;
     int a;
     bool ret;
 
-    stat_cur_subtest = algorithm;
+    self.shared.cur_subtest = algorithm;
 
-    for (stat_cur_addr = start; stat_cur_addr != end; stat_cur_addr += inc) {
+    for (self.shared.cur_addr = start; self.shared.cur_addr != end; self.shared.cur_addr += inc) {
         switch (algorithm) {
             case 0:
-                ret = marchb_m0(stat_cur_addr);
+                ret = marchb_m0(self.shared.cur_addr);
                 break;
             case 1:
-                ret = marchb_m1(stat_cur_addr);
+                ret = marchb_m1(self.shared.cur_addr);
                 break;
             case 2:
-                ret = marchb_m2(stat_cur_addr);
+                ret = marchb_m2(self.shared.cur_addr);
                 break;
             case 3:
-                ret = marchb_m3(stat_cur_addr);
+                ret = marchb_m3(self.shared.cur_addr);
                 break;
             case 4:
-                ret = marchb_m4(stat_cur_addr);
+                ret = marchb_m4(self.shared.cur_addr);
                 break;
             default:
                 break;
         }
         if (!ret) {
-            ULOG_INFO("MarchB M%d test failed at 0x%05X", algorithm, stat_cur_addr);
+            ULOG_INFO("MarchB M%d test failed at 0x%05X", algorithm, self.shared.cur_addr);
             return false;
         }
     }
@@ -249,10 +238,10 @@ uint32_t __no_inline_not_in_flash_func(marchb_test)()
     int failed = 0;
     int bit = 0;
 
-    for (bit = 0; bit < ctx.chip->bits; bit++) {
-        stat_cur_bit = bit;
+    for (bit = 0; bit < self.chip->bits; bit++) {
+        self.shared.cur_bit = bit;
         ram_bit_mask = 1 << bit;
-        if (!marchb_testbit(ctx.chip->mem_size)) {
+        if (!marchb_testbit(self.chip->mem_size)) {
             failed |= 1 << bit; // fail flag
         }
     }
@@ -284,14 +273,14 @@ uint32_t __no_inline_not_in_flash_func(psrand_next_bits)()
     static uint32_t cur_rand;
     uint32_t out;
 
-    if (bitcount < ctx.chip->bits) {
+    if (bitcount < self.chip->bits) {
         cur_rand = psrand_next();
         bitcount = 32;
     }
 
-    out = cur_rand & ((1 << (ctx.chip->bits)) - 1);
-    cur_rand = cur_rand >> ctx.chip->bits;
-    bitcount -= ctx.chip->bits;
+    out = cur_rand & ((1 << (self.chip->bits)) - 1);
+    cur_rand = cur_rand >> self.chip->bits;
+    bitcount -= self.chip->bits;
     return out;
 }
 
@@ -306,22 +295,22 @@ uint32_t __no_inline_not_in_flash_func(psrandom_test)()
 
     // Write seeded pseudorandom data
     for (i = 0; i < PSEUDO_VALUES; i++) {
-        stat_cur_subtest = i >> 2;
-        stat_cur_bit = i & 3;
+        self.shared.cur_subtest = i >> 2;
+        self.shared.cur_bit = i & 3;
         psrand_seed(random_seeds[i]);
-        for (stat_cur_addr = 0; stat_cur_addr < ctx.chip->mem_size; stat_cur_addr++) {
-            bitsout = psrand_next_bits(ctx.chip->bits);
-            ram_write(stat_cur_addr, bitsout);
+        for (self.shared.cur_addr = 0; self.shared.cur_addr < self.chip->mem_size; self.shared.cur_addr++) {
+            bitsout = psrand_next_bits(self.chip->bits);
+            ram_write(self.shared.cur_addr, bitsout);
         }
 
         // Reseed and then read the data back
         psrand_seed(random_seeds[i]);
-        for (stat_cur_addr = 0; stat_cur_addr < ctx.chip->mem_size; stat_cur_addr++) {
-            bitsout = psrand_next_bits(ctx.chip->bits);
-            bitsin = ram_read(stat_cur_addr);
+        for (self.shared.cur_addr = 0; self.shared.cur_addr < self.chip->mem_size; self.shared.cur_addr++) {
+            bitsout = psrand_next_bits(self.chip->bits);
+            bitsin = ram_read(self.shared.cur_addr);
             if (bitsout != bitsin) {
                 ULOG_INFO("Pseudorandom test failed. Expected %d but got %d at 0x%05X",
-                    bitsout, bitsin, stat_cur_addr);
+                    bitsout, bitsin, self.shared.cur_addr);
                 return 1;
             }
         }
@@ -348,20 +337,20 @@ uint32_t __no_inline_not_in_flash_func(refresh_test)()
     // This will mean that we get a stream  0-1 values for 1 bit
     // test and 0-F values for four bit test - based on the low bits
     // of the current address.
-    for (stat_cur_addr = 0; stat_cur_addr < ctx.chip->mem_size; stat_cur_addr++) {
-        bitsout = get_refresh_bitsout(stat_cur_addr, ctx.chip->bits);
-        ram_write(stat_cur_addr, bitsout);
+    for (self.shared.cur_addr = 0; self.shared.cur_addr < self.chip->mem_size; self.shared.cur_addr++) {
+        bitsout = get_refresh_bitsout(self.shared.cur_addr, self.chip->bits);
+        ram_write(self.shared.cur_addr, bitsout);
     }
 
     sleep_us(5000);
 
-    for (stat_cur_addr = 0; stat_cur_addr < ctx.chip->mem_size; stat_cur_addr++) {
-        bitsout = get_refresh_bitsout(stat_cur_addr, ctx.chip->bits);
-        bitsin = ram_read(stat_cur_addr);
+    for (self.shared.cur_addr = 0; self.shared.cur_addr < self.chip->mem_size; self.shared.cur_addr++) {
+        bitsout = get_refresh_bitsout(self.shared.cur_addr, self.chip->bits);
+        bitsin = ram_read(self.shared.cur_addr);
 
         if (bitsout != bitsin) {
             ULOG_INFO("Refresh test failed: expected %d, but got %d at 0x%05X",
-                 bitsout, bitsin, stat_cur_addr);
+                 bitsout, bitsin, self.shared.cur_addr);
             return 1;
         }
     }
@@ -369,33 +358,96 @@ uint32_t __no_inline_not_in_flash_func(refresh_test)()
     return 0;
 }
 
+uint32_t (*all_tests[])(void) = {
+    &marchb_test,
+    &psrandom_test,
+    &refresh_test,
+};
+
+static const uint8_t all_tests_len = 3;
+
 // Initial entry for the RAM test routines running
 // on the second CPU core.
-uint32_t __no_inline_not_in_flash_func(all_ram_tests)(const mem_chip_t *chip)
+uint32_t __no_inline_not_in_flash_func(__run_all)()
 {
+    ULOG_INFO("Running all memory tests...");
+    self.shared.run_state = 1;
+
     psrand_init_seeds();
 
-    ctx.chip = chip;
-
-    int failed;
-    int test = 0;
+    //uint32_t failed;
 
     // Initialize RAM by performing n RAS cycles
     march_element(false, 0);
 
-    // Now run actual tests
-    queue_add_blocking(&stat_cur_test, &test);
-    failed = marchb_test();
-    if (failed) return failed;
-    test = 1;
+    for (uint8_t i = 0; i<all_tests_len; i++) {
+        self.shared.cur_test = i+1;
+        self.shared.run_result = all_tests[i]();
 
-    queue_add_blocking(&stat_cur_test, &test);
-    failed = psrandom_test();
-    if (failed) return failed;
-    test = 2;
+        if (self.shared.run_result) {
+            self.shared.run_state = 2;
+            return self.shared.run_result;
+        }
+    }
 
-    queue_add_blocking(&stat_cur_test, &test);
-    failed = refresh_test();
-    if (failed) return failed;
+    self.shared.run_state =2;
     return 0;
 }
+
+void run_all() {
+    self.shared.please_run = 1;
+}
+
+const char *mem_test_names[] = {"Idle", "March-B", "Pseudo", "Refresh"};
+
+static void reset_shared() {
+    self.shared.cur_addr = 0;
+    self.shared.cur_bit = 0;
+    self.shared.cur_test = 0;
+    self.shared.cur_subtest = 0;
+    self.shared.run_state = 0;
+    self.shared.run_result = 0;
+    self.shared.please_run = 0;
+}
+
+
+static void __no_inline_not_in_flash_func(busy_wait_ram)(uint32_t ms) {
+    // Each loop is roughly 10-20 cycles. 
+    // At 150MHz (Pico 2), this is a "human perceivable" delay.
+    for (volatile uint32_t i = 0; i < ms * 10000; i++) {
+        __asm("nop");
+    }
+}
+
+// Entry point for second core. This is just a generic
+// function dispatcher lifted from the Raspberry Pi example code.
+static void __no_inline_not_in_flash_func(core1_entry)() {
+    while (true) {
+        if (self.shared.please_run)
+        {
+            self.shared.please_run = 0;
+            __run_all();
+        } else {
+            busy_wait_ram(100);
+        };
+    }
+}
+static void init () {
+    multicore_launch_core1(core1_entry);
+}
+
+static mem_tester_t self = {
+    .run_all = &run_all,
+    .shared = {
+        .cur_addr = 0,
+        .cur_bit = 0,
+        .cur_subtest = 0,
+        .cur_test = 0,
+        .run_state = 0,
+        .run_result = 0,
+        .reset = &reset_shared,
+        .init = &init,
+    },
+};
+
+mem_tester_t *mem_tester = &self;

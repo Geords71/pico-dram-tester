@@ -6,14 +6,14 @@
 #include "mem_chip.h"
 
 // Function queue entry for dispatching worker functions
-typedef struct
-{
-    uint32_t (*func)(const mem_chip_t *);
-    const mem_chip_t *mem_chip;
-} queue_entry_t;
+//typedef struct
+//{
+    //uint32_t (*func)(const mem_chip_t *);
+    //const mem_chip_t *mem_chip;
+//} queue_entry_t;
 
-extern queue_t call_queue;
-extern queue_t results_queue;
-extern queue_t stat_cur_test;
+//extern queue_t call_queue;
+//extern queue_t results_queue;
+//extern queue_t stat_cur_test;
 
 #endif

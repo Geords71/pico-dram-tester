@@ -60,29 +60,20 @@ typedef enum {
 } list_action_t;
 
 void gui_init();
-void fancy_rect(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height, rstyle_t style);
-void paint_button(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height,
+void paint_gui_fancy_rect(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height, rstyle_t style);
+void paint_gui_button(uint16_t sx, uint16_t sy, uint16_t width, uint16_t height,
                   char *text, const font_def_t *font, bool bold);
-void paint_status(uint16_t sx, uint16_t sy, uint16_t width, char *text);
-void paint_dialog(char *title);
-uint8_t gui_listbox(gui_listbox_t *lb, list_action_t act);
-void gui_messagebox(char *title, char *contents, const ico_def_t *icon);
+void paint_gui_status(uint16_t sx, uint16_t sy, uint16_t width, char *text);
+void paint_gui_dialog(char *title);
+void paint_gui_drum_animation();
+void paint_gui_listbox(gui_listbox_t *lb, list_action_t act);
+void paint_gui_messagebox(char *title, char *contents, const ico_def_t *icon);
+
+void paint_gui_test_screen();
 
 void gui_demo();
 
-typedef enum {
-    MAIN_MENU,
-    VARIANT_MENU,
-    SPEED_MENU,
-    DO_SOCKET,
-    DO_TEST,
-    TEST_RESULTS
-} gui_state_t;
-
-typedef struct {
-    gui_state_t state;
-} gui_t;
-
-extern gui_t gui;
-
+ 
+void paint_gui_test_screen_completion_status(uint32_t);
+void paint_gui_test_screen_visualization();
 #endif

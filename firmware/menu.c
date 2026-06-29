@@ -1,27 +1,28 @@
-#include <stdio.h>
-#include "hardware/timer.h"
+//#include <stdio.h>
+//#include "hardware/timer.h"
 #include "pico/util/queue.h"
 #include "menu.h"
 #include "board.h"
-#include "config.h"
+//#include "config.h"
 #include "logging/logging.h"
-#include "mem_chip.h"
-#include "mem_tests.h"
-#include "queue.h"
+//#include "mem_chip.h"
+#include "mem_tester.h"
+//#include "queue.h"
 #include "menu.h"
 
-#include "screen/start_screen.h"
+#include "screen/chip_screen.h"
 
-#define MAIN_MENU_ITEMS 16
+/*#define MAIN_MENU_ITEMS 16
 char *main_menu_items[MAIN_MENU_ITEMS];
 gui_listbox_t *cur_menu;
 gui_listbox_t main_menu = {7, 40, 220, MAIN_MENU_ITEMS, 4, 0, 0, main_menu_items};
 gui_listbox_t variants_menu = {7, 40, 220, 0, 4, 0, 0, 0};
 gui_listbox_t speed_menu = {7, 40, 220, 0, 4, 0, 0, 0};
+*/
 
 menu_t *cur_screen;
 
-void menu_init()
+/*void menu_init()
 {
     ULOG_INFO("Initializing GUI...");
     gui_init();
@@ -37,8 +38,8 @@ void menu_init()
 void menu_main_show()
 {
     cur_menu = &main_menu;
-    paint_dialog("Select Device");
-    gui_listbox(cur_menu, LIST_ACTION_NONE);
+    paint_gui_dialog("Select Device");
+    paint_gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
 void menu_variant_show()
@@ -50,11 +51,11 @@ void menu_variant_show()
         items[i] = chip_list[chip]->variants->list[i].name;
     }
 
-    paint_dialog("Select Variant");
+    paint_gui_dialog("Select Variant");
     cur_menu = &variants_menu;
     cur_menu->tot_lines = chip_list[chip]->variants->len;
     cur_menu->items = items;
-    gui_listbox(cur_menu, LIST_ACTION_NONE);
+    paint_gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
 // With the selected chip, populate the speed grade menu and show it
@@ -62,10 +63,10 @@ void menu_speed_show()
 {
     uint chip = main_menu.sel_line;
     cur_menu = &speed_menu;
-    paint_dialog("Select Speed Grade");
+    paint_gui_dialog("Select Speed Grade");
     speed_menu.items = (char **)chip_list[chip]->speed_names;
     speed_menu.tot_lines = chip_list[chip]->delay_sets.len;
-    gui_listbox(cur_menu, LIST_ACTION_NONE);
+    paint_gui_listbox(cur_menu, LIST_ACTION_NONE);
 }
 
 
@@ -81,9 +82,9 @@ static inline void update_vis_dot(uint16_t cx, uint16_t cy, uint16_t col)
 
 #define STATUS_ICON_X 155
 #define STATUS_ICON_Y 65
-
+*/
 // Play the drums
-bool drum_animation_cb(__unused struct repeating_timer *t)
+/*bool drum_animation_cb_old(__unused struct repeating_timer *t)
 {
     static uint8_t drum_st = 0;
     drum_st++;
@@ -105,8 +106,9 @@ bool drum_animation_cb(__unused struct repeating_timer *t)
     }
     return true;
 }
+    */
 
-struct repeating_timer drum_timer;
+/*struct repeating_timer drum_timer;
 // Show the RAM test console GUI
 void show_test_gui()
 {
@@ -116,29 +118,30 @@ void show_test_gui()
     char title[30];
     sprintf(title, "PIO@%dMHz Testing...", sys_clk);
 
-    paint_dialog(title);
+    paint_gui_dialog(title);
 
     // Cell status area. 32x32 elements.
-    fancy_rect(7, 31, 100, 100, B_SUNKEN_OUTER); // Usable size is 220x80.
-    fancy_rect(8, 32, 98, 98, B_SUNKEN_INNER);
+    paint_gui_fancy_rect(7, 31, 100, 100, B_SUNKEN_OUTER); // Usable size is 220x80.
+    paint_gui_fancy_rect(8, 32, 98, 98, B_SUNKEN_INNER);
     st7789_fill(9, 33, 96, 96, COLOR_BLACK);
     for (cy = 0; cy < 32; cy++) {
         for (cx = 0; cx < 32; cx++) {
             update_vis_dot(cx, cy, COLOR_DKGRAY);
         }
     }
-    stat_old_addr = 0;
-    stat_cur_bit = 0;
-    stat_cur_subtest = 0;
+    mem_tester->shared.old_addr = 0;
+    mem_tester->shared.cur_bit = 0;
+    mem_tester->shared.cur_subtest = 0;
 
     // Current test indicator
-    paint_status(120, 35, 110, "      ");
+    paint_gui_status(120, 35, 110, "      ");
     draw_icon(STATUS_ICON_X, STATUS_ICON_Y, &drum_icon0);
-    add_repeating_timer_ms(-100, drum_animation_cb, NULL, &drum_timer);
+    add_repeating_timer_ms(-100, drum_animation_cb_old, NULL, &drum_timer);
 }
+    */
 
 // Begins the RAM test with the selected RAM chip
-void __no_inline_not_in_flash_func(start_the_ram_test)(const mem_chip_t *mem_chip, uint8_t speed_grade, uint8_t variant)
+/*void __no_inline_not_in_flash_func(start_the_ram_test)(const mem_chip_t *mem_chip, uint8_t speed_grade, uint8_t variant)
 {
     // Get the power turned on
     board_ram_power_on();
@@ -151,16 +154,17 @@ void __no_inline_not_in_flash_func(start_the_ram_test)(const mem_chip_t *mem_chi
 
     // Dispatch to the second core
     ULOG_INFO("Sending all_ram_tests() to the core1 call_queue...");
-    queue_entry_t entry = {all_ram_tests, mem_chip};
+    queue_entry_t entry = {mem_tester->run_all, mem_chip};
     if(queue_try_add(&call_queue, &entry)) {
         ULOG_INFO("Sent.");
     } else {
         ULOG_WARNING("Couldn't send!");
     };
 }
+*/
 
 // Called when user presses the action button
-void menu_select()
+/*void menu_select()
 {
     // Do something based on the current menu
     switch (gui.state) {
@@ -180,7 +184,7 @@ void menu_select()
             menu_speed_show();
             break;
         case SPEED_MENU:
-            gui_messagebox(
+            paint_gui_messagebox(
                 "Place Chip in Socket",
                 "Turn on external supply afterwards, if used.",
                 &chip_icon
@@ -204,14 +208,14 @@ void menu_select()
             gui.state = MAIN_MENU;
             break;
     }
-}
+}*/
 
 
 
 
 
 // Figure out where visualization dot goes and map it
-static inline void map_vis_dot(int addr, int ox, int oy, int bitsize, uint16_t col)
+/*static inline void map_vis_dot(int addr, int ox, int oy, int bitsize, uint16_t col)
 {
     int cx, cy;
     if (bitsize == 4) {
@@ -223,15 +227,16 @@ static inline void map_vis_dot(int addr, int ox, int oy, int bitsize, uint16_t c
     }
     update_vis_dot(cx + ox, cy + oy, col);
 }
+    */
 
 // Draw up visualization from current test state
-void do_visualization()
+/*void do_visualization()
 {
     const uint16_t cmap[] = {COLOR_DKBLUE, COLOR_DKGREEN, COLOR_DKMAGENTA, COLOR_DKYELLOW, COLOR_GREEN};
     int bitsize = chip_list[main_menu.sel_line]->bits;
-    int new_addr = stat_cur_addr * 1024 / chip_list[main_menu.sel_line]->mem_size / bitsize;
-    int bit = stat_cur_bit;
-    uint16_t col = cmap[stat_cur_subtest];
+    int new_addr = mem_tester->shared.cur_addr * 1024 / chip_list[main_menu.sel_line]->mem_size / bitsize;
+    int bit = mem_tester->shared.cur_bit;
+    uint16_t col = cmap[mem_tester->shared.cur_subtest];
     int delta, i;
     int ox, oy = 0;
 
@@ -255,18 +260,18 @@ void do_visualization()
         ox = oy = 0;
     }
 
-    if (new_addr > stat_old_addr) {
-        delta = new_addr - stat_old_addr;
+    if (new_addr > mem_tester->shared.old_addr) {
+        delta = new_addr - mem_tester->shared.old_addr;
         for (i = 0; i < delta; i++) {
-            map_vis_dot(stat_old_addr + i, ox, oy, bitsize, col);
+            map_vis_dot(mem_tester->shared.old_addr + i, ox, oy, bitsize, col);
         }
     } else {
-        delta = stat_old_addr - new_addr;
+        delta = mem_tester->shared.old_addr - new_addr;
         for (i = delta - 1; i >= 0; i--) {
-            map_vis_dot(stat_old_addr + i, ox, oy, bitsize, col);
+            map_vis_dot(mem_tester->shared.old_addr + i, ox, oy, bitsize, col);
         }
     }
-    stat_old_addr = new_addr;
+    mem_tester->shared.old_addr = new_addr;
 }
 
 // Stops the RAM test
@@ -275,11 +280,12 @@ void stop_the_ram_test(const mem_chip_t *mem_chip)
     mem_chip->teardown_pio();
     board_ram_power_off();
 }
+*/
 
-static const char *ram_test_names[] = {"March-B", "Pseudo", "Refresh"};
+//static const char *ram_test_names[] = {"March-B", "Pseudo", "Refresh"};
 
 // During a RAM test, updates the status window and checks for the end of the test
-void do_menu_status()
+/*void do_menu_status()
 {
     uint32_t retval;
     char retstring[30];
@@ -292,8 +298,8 @@ void do_menu_status()
 
         // Update the status text
         if (queue_try_remove(&stat_cur_test, &test)) {
-            paint_status(120, 35, 110, "      ");
-            paint_status(120, 35, 110, (char *)ram_test_names[test]);
+            paint_gui_status(120, 35, 110, "      ");
+            paint_gui_status(120, 35, 110, (char *)ram_test_names[test]);
         }
 
         // Check official status
@@ -311,7 +317,7 @@ void do_menu_status()
             gui.state = TEST_RESULTS;
             st7789_fill(STATUS_ICON_X, STATUS_ICON_Y, 32, 32, COLOR_LTGRAY); // Erase icon
             if (retval == 0) {
-                paint_status(120, 35, 110, "Passed!");
+                paint_gui_status(120, 35, 110, "Passed!");
                 draw_icon(STATUS_ICON_X, STATUS_ICON_Y, &check_icon);
             } else {
                 draw_icon(STATUS_ICON_X, STATUS_ICON_Y, &error_icon);
@@ -321,9 +327,9 @@ void do_menu_status()
                         (retval >> 2) & 1,
                         (retval >> 1) & 1,
                         (retval & 1));
-                    paint_status(120, 105, 110, retstring);
+                    paint_gui_status(120, 105, 110, retstring);
                 } else {
-                    paint_status(120, 105, 110, "Failed");
+                    paint_gui_status(120, 105, 110, "Failed");
                 }
             }
         }
@@ -369,16 +375,17 @@ void menu_back()
 void menu_scroll_down()
 {
     if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
-        gui_listbox(cur_menu, LIST_ACTION_DOWN);
+        paint_gui_listbox(cur_menu, LIST_ACTION_DOWN);
     }
 }
 
 void menu_scroll_up()
 {
     if (gui.state == MAIN_MENU || gui.state == SPEED_MENU || gui.state == VARIANT_MENU) {
-        gui_listbox(cur_menu, LIST_ACTION_UP);
+        paint_gui_listbox(cur_menu, LIST_ACTION_UP);
     }
 }
+
 
 void do_menu_wheel() {
     switch (do_board_encoder()) {
@@ -392,36 +399,52 @@ void do_menu_wheel() {
             break;
     }
 }
+    */
 
-void menu_init_new()
+void menu_init()
 {
+
+    ULOG_INFO("Initializing Second Core for Mem Tester Module...");
+    mem_tester->shared.init();
+
     ULOG_INFO("Initializing GUI...");
     gui_init();
 
-    cur_screen = &start_screen.base;
-    cur_screen->enter(cur_screen, 0);
+    cur_screen = chip_screen;
+    chip_screen->enter(chip_screen);
 }
+
 
 
 void do_inputs()
 {
     if (board_encoder_pushed()) {
-        cur_screen = cur_screen->do_encoder_pushed();
+        cur_screen = cur_screen->do_encoder_pushed(cur_screen);
     }
 
     if (board_back_pushed()) {
-        cur_screen = cur_screen->do_back_pushed();
+        cur_screen = cur_screen->do_back_pushed(cur_screen);
     }
 
     switch (do_board_encoder()) {
         case BOARD_ENCODER_ROTATION_CLOCKWISE:
-            cur_screen = cur_screen->do_encoder_clockwise();
+            cur_screen = cur_screen->do_encoder_clockwise(cur_screen);
             break;
         case BOARD_ENCODER_ROTATION_ANTICLOCKWISE:
-            cur_screen = cur_screen->do_encoder_anticlockwise();
+            cur_screen = cur_screen->do_encoder_anticlockwise(cur_screen);
             break;
         default:
             break;
     }
 
+}
+
+void do_tasks() {
+    cur_screen = cur_screen->do_tasks();
+}
+
+
+void screen_task() {
+    do_inputs();
+    do_tasks();
 }

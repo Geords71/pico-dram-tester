@@ -1,7 +1,9 @@
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <pico/stdlib.h>
-#include <tusb.h>
+#include "pico/stdlib.h"
+#include "pico/time.h"
+#include "tusb.h"
 #include "logging.h"
 #include "ulog.h"
 
@@ -27,34 +29,25 @@ char* get_timestamp()
 #define LOG_ENTRY_SIZE  128 // Max chars per entry
  
 static char log_buffer[LOG_BUFFER_SIZE][LOG_ENTRY_SIZE];
-static int head = 0, tail = 0;
+static _Atomic uint32_t head = 0;
+static _Atomic uint32_t tail = 0;
+
 int grace_period = 10;
 
 void console_logger(ulog_level_t severity, char *msg) {
 
-    static char log_line[LOG_ENTRY_SIZE];
-    sprintf(
-        log_line,
-        "%s [%s]: %s\n",
-        get_timestamp(),
-        ulog_level_name(severity),
-        msg
-    );
+    // Queue into ring buffer
+    snprintf(log_buffer[head], LOG_ENTRY_SIZE,
+             "%s [%s]: %s\n",
+             get_timestamp(),
+             ulog_level_name(severity),
+             msg);
 
-    if (grace_period == 0)
-    {
-        printf(log_line);
-    }
-    else
-    {
-        // Queue into ring buffer
-        strncpy(log_buffer[head], log_line, LOG_ENTRY_SIZE - 1);
-        log_buffer[head][LOG_ENTRY_SIZE - 1] = '\0';
-        head = (head + 1) % LOG_BUFFER_SIZE;
-        if (head == tail) {
-            // overwrite oldest
-            tail = (tail + 1) % LOG_BUFFER_SIZE;
-        }
+    log_buffer[head][LOG_ENTRY_SIZE - 1] = '\0';
+    head = (head + 1) % LOG_BUFFER_SIZE;
+    if (head == tail) {
+        // overwrite oldest
+        tail = (tail + 1) % LOG_BUFFER_SIZE;
     }
 }
 

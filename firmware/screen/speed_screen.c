@@ -5,15 +5,14 @@
 #include "mem_chip.h"
 #include "mem_tester.h"
 #include "logging/logging.h"
-#include "variant_screen.h"
 #include "speed_screen.h"
+#include "test_screen.h"
 
 // Singleton self pointer
 static menu_t self;
 
 // Persistent backing storage for this screen
-static char *variant_items[MEMCHIP_MAX_VARIANTS];
-static gui_listbox_t variant_listbox = {
+static gui_listbox_t speed_listbox = {
     .sx = 7,
     .sy = 40,
     .width = 220,
@@ -21,14 +20,15 @@ static gui_listbox_t variant_listbox = {
     .vis_lines = 4,
     .sel_line = 0,
     .start_line = 0,
-    .items = variant_items,
+    .items = NULL,
 };
 
+static bool prompt_active = false;
 static const mem_chip_t *cur_chip = NULL;
 
 static void show() {
-    paint_gui_dialog("Select Variant");
-    paint_gui_listbox(&variant_listbox, LIST_ACTION_NONE);
+    paint_gui_dialog("Select speed");
+    paint_gui_listbox(&speed_listbox, LIST_ACTION_NONE);
 }
 
 static void init_listbox()
@@ -38,50 +38,62 @@ static void init_listbox()
     if (cur_chip == mem_tester->chip) {
         return;
     }
-
     cur_chip = mem_tester->chip;
 
-    uint8_t count = cur_chip->variants->len;
-
-    for (uint8_t i = 0; i < count; i++) {
-        variant_items[i] = cur_chip->variants->list[i].name;
-    }
-
-    variant_listbox.tot_lines = count;
-    variant_listbox.sel_line = 0;
+    speed_listbox.items = (char **)cur_chip->speed_names;
+    speed_listbox.tot_lines = cur_chip->delay_sets.len;
+    speed_listbox.sel_line = 0;
+    speed_listbox.start_line = 0;
 }
 
 static void enter(menu_t *parent)
 {
     if (parent != NULL) {
-        init_listbox();
         self.parent = parent;
+        init_listbox();
     }
     show();
 }
 
 static menu_t * do_back_pushed()
 {
+    if (prompt_active) {
+        prompt_active = false;
+        show();
+        return &self;
+    }
     self.parent->enter(NULL);
     return self.parent;
 }
 
 static menu_t * do_encoder_pushed()
 {
-    mem_tester->variant_idx = variant_listbox.sel_line;
+    if (prompt_active) {
+        prompt_active = false;
 
-    menu_t *next_screen = speed_screen;
-    next_screen->enter(&self);
-    return next_screen;
+        mem_tester->speed_idx = speed_listbox.sel_line;
+
+        menu_t *next_screen = test_screen;
+        next_screen->enter(&self);
+        return next_screen;
+    }
+
+    prompt_active = true;
+    paint_gui_messagebox(
+        "Place Chip in Socket",
+        "Turn on external supply afterwards, if used.",
+        &chip_icon
+    );
+    return &self;
 }
 
 static menu_t * do_encoder_clockwise() {
-    paint_gui_listbox(&variant_listbox, LIST_ACTION_DOWN);
+    paint_gui_listbox(&speed_listbox, LIST_ACTION_DOWN);
     return &self;
 }
 
 static menu_t * do_encoder_anticlockwise() {
-    paint_gui_listbox(&variant_listbox, LIST_ACTION_UP);
+    paint_gui_listbox(&speed_listbox, LIST_ACTION_UP);
     return &self;
 }
 
@@ -99,4 +111,4 @@ static menu_t self = {
     .parent = NULL,
 };
 
-menu_t * variant_screen = &self;
+menu_t * speed_screen = &self;

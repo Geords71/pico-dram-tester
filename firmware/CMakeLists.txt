@@ -109,7 +109,7 @@ target_sources(pmemtest PRIVATE
     logging/logging.c
     mem_chip.c
     menu.c
-    mem_tests.c
+    mem_tester.c
     queue.c
     pmemtest.c
     mem_chip/ram4027.c
@@ -124,7 +124,9 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram4464.c
     mem_chip/ram44256.c
     mem_chip/ram4816.c
-    screen/start_screen.c
+    screen/chip_screen.c
+    screen/speed_screen.c
+    screen/test_screen.c
     screen/variant_screen.c
     shared_storage/fat_little_flash.c
     shared_storage/pico_to_fat.c
