@@ -39,6 +39,7 @@ mem_chip_t ram4108_chip= {
     .bits = 1,
     .variants = &ram4108_variants,
     .name = "4108 (8Kx1 use 4116skt)",
+    .short_name = "4108",
     .timing_family = "ram4108",
     .delay_sets = ram4108_delay_sets,
     .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}

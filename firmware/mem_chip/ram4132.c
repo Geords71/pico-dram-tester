@@ -78,6 +78,7 @@ const mem_chip_t ram4132_stk_chip = {
     .bits = 1,
     .variants = NULL,
     .name = "4132 (32Kx1, stacked)",
+    .short_name = "4132stk",
     .timing_family = "ram4132",
     .delay_sets = ram4132_delay_sets,
     .speed_names = {"150ns", "200ns", "250ns", "300ns"},

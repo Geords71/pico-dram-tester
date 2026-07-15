@@ -57,6 +57,7 @@ const mem_chip_t ram4416_chip  = {
     .bits = 4,
     .variants = NULL,
     .name = "4416 (16Kx4)",
+    .short_name = "4416",
     .timing_family = "ram4416",
     .delay_sets = ram4416_delay_sets,
     .speed_names = {"120ns", "150ns", "200ns"},

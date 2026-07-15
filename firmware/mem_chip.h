@@ -37,6 +37,7 @@ typedef struct {
     uint32_t bits;
     const mem_chip_variants_t *variants;
     const char *name;
+    const char *short_name;
     const char *timing_family;
     delay_sets_t delay_sets;
     char *speed_names[];

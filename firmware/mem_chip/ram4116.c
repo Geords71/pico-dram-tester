@@ -30,6 +30,7 @@ const mem_chip_t ram4116_chip = {
     .bits = 1,
     .variants = NULL,
     .name = "4116 (16Kx1)",
+    .short_name = "4116",
     .timing_family = "ram4116",
     .delay_sets = ram4116_delay_sets,
     .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}

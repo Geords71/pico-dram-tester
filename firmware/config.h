@@ -8,14 +8,8 @@ typedef struct
 {
     bool led_on;
     int32_t enc_states_per_click;
-} app_config_t;
+} config_t;
 
-extern app_config_t app_config;
-
-extern void load_app_config(bool refresh);
-
-void do_system_config();
-uint32_t get_system_overclock();
-
+config_t * config();
 
 #endif

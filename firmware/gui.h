@@ -72,6 +72,7 @@ void paint_gui_messagebox(char *title, char *contents, const ico_def_t *icon);
 void paint_gui_test_screen();
 
 void gui_demo();
+void gui_update();
 
  
 void paint_gui_test_screen_completion_status(uint32_t);

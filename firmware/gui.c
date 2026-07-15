@@ -110,7 +110,7 @@ void paint_gui_dialog(char *title)
     paint_gui_fancy_rect(0, 0, 240, 135, WINDOW);
     st7789_fill(3, 3, 240 - 7, 26, COLOR_DKBLUE);
     paint_gui_button(240 - 6 - 21, 6, 21, 21,"\x01", &widgets16, false);
-    font_string(5, 5, title, 255, COLOR_WHITE, COLOR_DKBLUE, &sserif20, true);
+    font_string(5, 5, title, 32, COLOR_WHITE, COLOR_DKBLUE, &sserif20, true);
 }
 
 // Lines visible
@@ -375,17 +375,15 @@ static inline void update_vis_dot(uint16_t cx, uint16_t cy, uint16_t col)
     st7789_fill(CELL_STAT_X + cx * 3, CELL_STAT_Y + cy * 3, 2, 2, col);
 }
 
+void gui_update () {
+    st7789_update();
+}
 
 // Show the RAM test console GUI
 static int old_addr = 0;
-void paint_gui_test_screen()
+void paint_gui_test_screen(char *title)
 {
     uint16_t cx, cy;
-
-    uint32_t sys_clk = get_system_overclock() / 1000000;
-    char title[30];
-    sprintf(title, "PIO@%dMHz Testing...", sys_clk);
-
     paint_gui_dialog(title);
 
     // Cell status area. 32x32 elements.

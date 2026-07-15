@@ -31,6 +31,7 @@ const mem_chip_t ram4027_chip = {
     .bits = 1,
     .variants = NULL,
     .name = "4027 (4Kx1 use 4116skt)",
+    .short_name = "4027",
     .timing_family = "ram4027",
     .delay_sets = ram4027_delay_sets,
     .speed_names = {"120ns", "150ns", "200ns", "250ns", "300ns"}

@@ -5,7 +5,6 @@
 #include "ram41128.h"
 #include "ram41128.pio.h"
 #define RAM41128_DELAY_SET_ROWS 4
-#define GPIO_LED 25
 
 static const delay_sets_t ram41128_delay_sets = {
     .len = RAM41128_DELAY_SET_ROWS,
@@ -63,7 +62,6 @@ int ram41128_ram_read(int addr)
                         ((0 & 1) << 18));            // Data bit
     while (pio_sm_is_rx_fifo_empty(pio, sm)) {}      // Wait for data to arrive
     d = pio_sm_get(pio, sm);                         // Return the data
-    gpio_put(GPIO_LED, d);
     return d;
 }
 
@@ -98,6 +96,7 @@ const mem_chip_t ram41128_chip = {
     .variants = NULL,
     .delay_sets = ram41128_delay_sets,
     .name = "41128 (128Kx1)",
+    .short_name = "41128",
     .timing_family = "ram41128",
     .speed_names = {"120ns", "150ns", "200ns", "250ns"}
 };

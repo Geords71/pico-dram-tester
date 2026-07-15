@@ -16,11 +16,11 @@ by deleting SYSTEM.CFG and powercycling the board.
 So please don't use this drive for anything other than storing configuration
 files, yet. And maybe avoid having any files open for too long on your host OS.
 
-### Writes to the storage will wedge the Pico 2's Second Core
+### Writes to the storage while testing will wedge the Pico 2's Second Core
 
 The aim is to fix this. But the simple workaround for now is to power
-cycle your dram tester after making any config changes. Otherwise, any
-ram test you select will hang indefinitely.
+cycle your dram tester if, after making any config changes, you experience
+a hang.
 
 ## USB Serial Logging Support
 

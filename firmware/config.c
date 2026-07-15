@@ -7,30 +7,15 @@
 #include <ff.h>
 #include "logging/logging.h"
 #include "shared_storage/shared_storage.h"
-#include "hardware/clocks.h"
-#include "hardware/vreg.h"
 
-#define PMEMTEST_OVERCLOCK_KHZ 300000
 #define CONFIG_FILE_PATH "SYSTEM.CFG"
 
-uint32_t get_system_overclock()
-{
-    return clock_get_hz(clk_sys);
-}
+//uint32_t get_system_overclock()
+//{
+//    return clock_get_hz(clk_sys);
+//}
 
-void set_system_overclock()
-{
-    // Increase core voltage slightly (default is 1.10V) to better handle overclock
-    vreg_set_voltage(VREG_VOLTAGE_1_20);
 
-    // Overclock! It should panic if it can't reach this as we have set second argument to true
-    set_sys_clock_khz(PMEMTEST_OVERCLOCK_KHZ, true);
-}
-
-void do_system_config()
-{
-    set_system_overclock();
-};
 
 static bool parse_int32(const char* key, const char* value, void* out) {
     int32_t* p = (int32_t*)out;
@@ -85,23 +70,23 @@ typedef struct {
     parse_fn_t parse;
 } config_field_t;
 
-app_config_t app_config = {
+static config_t self = {
     .led_on = true,
     .enc_states_per_click = 2,
 };
 
 static const config_field_t config_schema[] = {
-    { "led_on",               offsetof(app_config_t, led_on),               parse_bool},
-    { "enc_states_per_click", offsetof(app_config_t, enc_states_per_click), parse_int32},
+    {"led_on",                     offsetof(config_t, led_on),                     parse_bool},
+    {"enc_states_per_click",       offsetof(config_t, enc_states_per_click),       parse_int32},
 };
 
-void parse_config_line(const char* key, const char* value) {
+static void parse_config_line(const char* key, const char* value) {
 
     for (size_t i = 0; i < sizeof(config_schema)/sizeof(config_schema[0]); i++)
     {
         if (strcmp(key, config_schema[i].key) == 0)
         {
-            void* field_ptr = (char*)&app_config + config_schema[i].offset;
+            void* field_ptr = (char*)&self + config_schema[i].offset;
             static bool retval;
 
             retval = config_schema[i].parse(key, value, field_ptr);
@@ -115,12 +100,7 @@ void parse_config_line(const char* key, const char* value) {
 
 static bool loaded = false;
 
-void load_app_config(bool refresh) {
-    if (loaded && !refresh) {
-        ULOG_INFO("Config is already loaded and a refresh was not requested.");
-        return;
-    }
-
+static void load() {
     ULOG_INFO("Loading settings from %s...", CONFIG_FILE_PATH);
     if (mount_shared_storage() != FR_OK)
     {
@@ -150,4 +130,9 @@ void load_app_config(bool refresh) {
     f_close(&fp);
     unmount_shared_storage();
     loaded = true;
+}
+
+config_t * config() {
+    if (!loaded) load();
+    return &self;
 }

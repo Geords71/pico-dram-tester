@@ -9,6 +9,7 @@ typedef enum {
 
 } board_encoder_movement;
 
+extern void board_pre_init();
 extern void board_init();
 extern void board_ram_power_on();
 extern void board_ram_power_off();

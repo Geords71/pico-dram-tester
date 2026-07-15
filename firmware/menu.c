@@ -447,4 +447,5 @@ void do_tasks() {
 void screen_task() {
     do_inputs();
     do_tasks();
+    gui_update();
 }

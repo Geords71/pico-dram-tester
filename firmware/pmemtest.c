@@ -21,13 +21,10 @@ int main() {
 
     // Apply things like core voltage and overclock
     ULOG_INFO("Configuring Core System Settings...");
-    do_system_config();
+    board_pre_init();
 
     ULOG_INFO("Initializing Flash Storage...");
     fat_little_flash_initialize();
-
-    ULOG_INFO("Loading Application Config from Flash Storage...");
-    load_app_config(true);
 
     // We must do this to prevent tusb from messing with lcd display later.
     ULOG_INFO("Configuring UART...");

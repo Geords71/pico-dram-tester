@@ -1,4 +1,6 @@
+#include "hardware/clocks.h"
 #include "hardware/gpio.h"
+#include "hardware/vreg.h"
 #include "pico/stdlib.h"
 #include "board.h"
 #include "logging/logging.h"
@@ -12,9 +14,19 @@
 #define GPIO_LED 25
 
 #define BUTTON_DEBOUNCE_COUNT 50000
+#define PMEMTEST_OVERCLOCK_KHZ 300000
+
+void board_pre_init() {
+    // Increase core voltage slightly (default is 1.10V) to better handle overclock
+    ULOG_INFO("Setting Core Voltage to 1.2V...");
+    vreg_set_voltage(VREG_VOLTAGE_1_20);
+
+    // Overclock! It should panic if it can't reach this as we have set second argument to true
+    ULOG_INFO("Overclocking to %d KHz...", PMEMTEST_OVERCLOCK_KHZ);
+    set_sys_clock_khz(PMEMTEST_OVERCLOCK_KHZ, true);
+}
 
 void board_init() {
-
     // Set up encoder, led and button GPIO pins.
     gpio_init(GPIO_LED);
     gpio_init(GPIO_QUAD_A);
@@ -28,9 +40,9 @@ void board_init() {
     gpio_set_dir(GPIO_QUAD_BTN, GPIO_IN);
     gpio_set_dir(GPIO_BACK_BTN, GPIO_IN);
 
-    load_app_config(false);
+    config_t *cfg = config();
 
-    if(app_config.led_on)
+    if(cfg->led_on)
     {
         ULOG_INFO("Lighting LED...");
         gpio_put(GPIO_LED, 1);
@@ -116,7 +128,9 @@ uint8_t do_board_encoder(void) {
     encoder_prev_ab = ab;
 
     int32_t diff = encoder_position - encoder_last_position;
-    int32_t spc = app_config.enc_states_per_click;
+
+    config_t *cfg = config();
+    int32_t spc = cfg->enc_states_per_click;
 
     if (diff >= spc) {
         encoder_last_position += spc;

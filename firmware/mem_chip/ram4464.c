@@ -59,6 +59,7 @@ const mem_chip_t ram4464_chip  = {
     .bits = 4,
     .variants = NULL,
     .name = "4464 (64Kx4)",
+    .short_name = "4464",
     .timing_family = "ram4464",
     .delay_sets = ram4464_delay_sets,
     .speed_names = {"60ns", "70ns", "80ns", "100ns", "120ns", "150ns"}

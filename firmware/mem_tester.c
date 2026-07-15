@@ -398,6 +398,10 @@ void run_all() {
     self.shared.please_run = 1;
 }
 
+void stop_all() {
+    self.shared.please_run = 0;
+}
+
 const char *mem_test_names[] = {"Idle", "March-B", "Pseudo", "Refresh"};
 
 static void reset_shared() {

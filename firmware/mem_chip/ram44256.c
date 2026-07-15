@@ -62,6 +62,7 @@ const mem_chip_t ram44256_chip = {
     .bits = 4,
     .variants = NULL,
     .name = "44256 (256Kx4)",
+    .short_name = "44256",
     .timing_family = "ram44256",
     .delay_sets = ram44256_delay_sets,
     .speed_names = {"60ns", "70ns", "80ns", "100ns", "120ns"}
