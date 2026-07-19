@@ -125,6 +125,7 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram44256.c
     mem_chip/ram4816.c
     screen/chip_screen.c
+    screen/main_screen.c
     screen/speed_screen.c
     screen/test_screen.c
     screen/variant_screen.c

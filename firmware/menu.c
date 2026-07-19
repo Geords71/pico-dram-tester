@@ -10,7 +10,7 @@
 //#include "queue.h"
 #include "menu.h"
 
-#include "screen/chip_screen.h"
+#include "screen/main_screen.h"
 
 /*#define MAIN_MENU_ITEMS 16
 char *main_menu_items[MAIN_MENU_ITEMS];
@@ -410,8 +410,8 @@ void menu_init()
     ULOG_INFO("Initializing GUI...");
     gui_init();
 
-    cur_screen = chip_screen;
-    chip_screen->enter(chip_screen);
+    cur_screen = main_screen;
+    main_screen->enter(main_screen);
 }
 
 

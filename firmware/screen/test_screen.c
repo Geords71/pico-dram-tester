@@ -22,7 +22,11 @@ static menu_t self;
 
 
 static menu_t * do_back_pushed() {
-    if (state == TESTS_RUNNING) return &self;
+
+    if (state == TESTS_RUNNING) {
+        mem_tester->shared.please_stop = true;
+        return &self;
+    };
 
     self.parent->enter(NULL);
     return self.parent;
@@ -40,10 +44,13 @@ static void show() {
     paint_gui_test_screen(title);
 }
 
+static bool showing_stopping = false;
 static void start_tests() {
     const mem_chip_t *chip = mem_tester->chip;
 
     mem_tester->shared.reset();
+    showing_stopping = false;
+
     board_ram_power_on();
 
     ULOG_INFO("Testing %s chip at %s...", chip->name, chip->speed_names[mem_tester->speed_idx]);
@@ -66,7 +73,7 @@ static void stop_tests() {
 
 
 static menu_t * do_encoder_pushed() {
-    if (state == TESTS_RUNNING) return &self;
+    if (state != TESTS_FINISHED) return &self;
     show();
     start_tests();
     return &self;
@@ -79,8 +86,15 @@ static void enter (menu_t *parent) {
 }
 
 static uint32_t last_test = 0;
+
 static inline void refresh_status (uint8_t cur_test) {
-    if (cur_test != last_test) {
+    if (mem_tester->shared.please_stop && !showing_stopping) {
+        showing_stopping = true;
+        paint_gui_status(120, 35, 110, "        ");
+        paint_gui_status(120, 35, 110, "Stopping");
+    }
+
+    if (cur_test != last_test && !showing_stopping) {
         paint_gui_status(120, 35, 110, "      ");
         paint_gui_status(120, 35, 110, (char *) mem_test_names[cur_test]);
         last_test = cur_test;
@@ -92,7 +106,7 @@ static inline void refresh_status (uint8_t cur_test) {
 // the current screen.
 static menu_t * do_tasks()
 {
-    if (state != TESTS_RUNNING) {
+    if (state == TESTS_FINISHED) {
         return &self;
     }
 
@@ -100,7 +114,7 @@ static menu_t * do_tasks()
     paint_gui_drum_animation();
     refresh_status (mem_tester->shared.cur_test);
 
-    if (mem_tester->shared.run_state != 2) {
+    if (mem_tester->shared.run_state != MEM_TESTER_FINISHED) {
         return &self;
     }
 

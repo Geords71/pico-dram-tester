@@ -1,5 +1,5 @@
-#ifndef _SDTART_SCREEN_H
-#define _START_SCREEN_H
+#ifndef _CHIP_SCREEN_H
+#define _CHIP_SCREEN_H
 
 #include "menu.h"
 #include "mem_chip.h"

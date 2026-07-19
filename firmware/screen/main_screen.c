@@ -1,58 +1,57 @@
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include "gui.h"
-#include "logging/logging.h"
-#include "mem_chip.h"
+#include "stdbool.h"
+#include "stdint.h"
 #include "mem_tester.h"
+#include "main_screen.h"
 #include "chip_screen.h"
-#include "variant_screen.h"
-#include "speed_screen.h"
+#include "mem_tester.h"
 
+enum menu_items_t {
+    STANDARD_TEST,
+    SOAK_TEST,
+    NUM_MENU_ITEMS,
+};
 
-static menu_t self;
+static char *listbox_items[NUM_MENU_ITEMS] = {
+    [STANDARD_TEST] = "Standard Test",
+    [SOAK_TEST] = "Soak Test",
+};
 
-static char *listbox_items[NUM_CHIPS];
 static gui_listbox_t listbox = {
     .sx = 7,
     .sy = 40,
     .width = 220,
-    .tot_lines = NUM_CHIPS,
+    .tot_lines = NUM_MENU_ITEMS,
     .vis_lines = 4,
     .sel_line = 0,
     .start_line = 0,
     .items = listbox_items,
 };
 
-static void show() {
-    paint_gui_dialog("Select Device");
-    paint_gui_listbox(&listbox, LIST_ACTION_NONE);
-}
+static menu_t self;
 
-static void init_listbox() {
-    uint i;
-    for (i = 0; i < NUM_CHIPS; i++) {
-        listbox_items[i] = (char *)chip_list[i]->name;
-    }
+static void show() {
+    paint_gui_dialog("Main Menu");
+    paint_gui_listbox(&listbox, LIST_ACTION_NONE);
 }
 
 static void enter(menu_t *parent)
 {
     if (parent != NULL) {
         self.parent = parent;
-        init_listbox();
     }
     show();
 }
 
 static menu_t * do_encoder_pushed()
 {
-    mem_tester->chip = chip_list[listbox.sel_line];
+    uint8_t code = listbox.sel_line;
+    menu_t *next_screen = chip_screen;
 
-    menu_t *next_screen = speed_screen;
-    if (mem_tester->chip->variants != NULL) {
-        next_screen = variant_screen;
-    }
+    if (code == SOAK_TEST) {
+        mem_tester->shared.please_soak = true;
+    } else {
+        mem_tester->shared.please_soak = false;
+    };
 
     next_screen->enter(&self);
     return next_screen;
@@ -87,4 +86,4 @@ static menu_t self = {
     .parent = NULL,
 };
 
-menu_t *chip_screen = &self;
+menu_t *main_screen = &self;

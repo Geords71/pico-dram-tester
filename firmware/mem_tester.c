@@ -358,39 +358,55 @@ uint32_t __no_inline_not_in_flash_func(refresh_test)()
     return 0;
 }
 
-uint32_t (*all_tests[])(void) = {
-    &marchb_test,
-    &psrandom_test,
-    &refresh_test,
+static uint32_t warmup_test () {
+    march_element(false, 0);
+    return 0;
+}
+
+enum mem_test_names_t {
+    MEM_TEST_FUNC_WARMUP,
+    MEM_TEST_FUNC_MARCHB,
+    MEM_TEST_FUNC_PSEUDO,
+    MEM_TEST_FUNC_REFRESH,
+    MEM_TEST_FUNC_COUNT,
 };
 
-static const uint8_t all_tests_len = 3;
+const char *mem_test_names[] = {
+    [MEM_TEST_FUNC_WARMUP] = "Warm-Up",
+    [MEM_TEST_FUNC_MARCHB] = "March-B",
+    [MEM_TEST_FUNC_PSEUDO] = "Pseudo",
+    [MEM_TEST_FUNC_REFRESH] = "Refresh",
+};
+
+uint32_t (*all_tests[])(void) = {
+    [MEM_TEST_FUNC_WARMUP] = &warmup_test,
+    [MEM_TEST_FUNC_MARCHB] = &marchb_test,
+    [MEM_TEST_FUNC_PSEUDO] = &psrandom_test,
+    [MEM_TEST_FUNC_REFRESH] = &refresh_test,
+};
 
 // Initial entry for the RAM test routines running
 // on the second CPU core.
 uint32_t __no_inline_not_in_flash_func(__run_all)()
 {
-    ULOG_INFO("Running all memory tests...");
-    self.shared.run_state = 1;
 
     psrand_init_seeds();
 
     //uint32_t failed;
 
     // Initialize RAM by performing n RAS cycles
-    march_element(false, 0);
+    //march_element(false, 0);
 
-    for (uint8_t i = 0; i<all_tests_len; i++) {
-        self.shared.cur_test = i+1;
+    for (uint8_t i = 0; i<MEM_TEST_FUNC_COUNT; i++) {
+        self.shared.cur_test = i;
         self.shared.run_result = all_tests[i]();
 
         if (self.shared.run_result) {
-            self.shared.run_state = 2;
+            self.shared.run_state = MEM_TESTER_FINISHED;
             return self.shared.run_result;
         }
     }
 
-    self.shared.run_state =2;
     return 0;
 }
 
@@ -402,16 +418,16 @@ void stop_all() {
     self.shared.please_run = 0;
 }
 
-const char *mem_test_names[] = {"Idle", "March-B", "Pseudo", "Refresh"};
-
+// Reset the shared variables that should not persist between runs
 static void reset_shared() {
     self.shared.cur_addr = 0;
     self.shared.cur_bit = 0;
-    self.shared.cur_test = 0;
+    self.shared.cur_test = MEM_TEST_FUNC_WARMUP;
     self.shared.cur_subtest = 0;
-    self.shared.run_state = 0;
+    self.shared.run_state = MEM_TESTER_IDLE;
     self.shared.run_result = 0;
-    self.shared.please_run = 0;
+    self.shared.please_run = false;
+    self.shared.please_stop = false;
 }
 
 
@@ -427,10 +443,25 @@ static void __no_inline_not_in_flash_func(busy_wait_ram)(uint32_t ms) {
 // function dispatcher lifted from the Raspberry Pi example code.
 static void __no_inline_not_in_flash_func(core1_entry)() {
     while (true) {
+
         if (self.shared.please_run)
         {
-            self.shared.please_run = 0;
-            __run_all();
+            ULOG_INFO("Running all memory tests...");
+            self.shared.run_state = MEM_TESTER_RUNNING;
+            uint32_t return_code = __run_all();
+            ULOG_INFO("Tests finished with code:%d, soak:%d, stop:%d...", return_code, self.shared.please_soak, self.shared.please_stop);
+
+            // If we've selected soak mode, the tests are passing, and the
+            // user hasn't requested we stop, keep going!
+            if (return_code == 0 && self.shared.please_soak && !self.shared.please_stop) {
+                ULOG_INFO("Re-Running all memory tests...");
+            } else {
+                // We either failed, were on;y doing a single run, or the
+                // user asked us to stop.
+                ULOG_INFO("Memory test finished...");
+                self.shared.please_run = 0;
+                self.shared.run_state = MEM_TESTER_FINISHED;
+            };
         } else {
             busy_wait_ram(100);
         };
@@ -447,7 +478,7 @@ static mem_tester_t self = {
         .cur_bit = 0,
         .cur_subtest = 0,
         .cur_test = 0,
-        .run_state = 0,
+        .run_state = MEM_TESTER_IDLE,
         .run_result = 0,
         .reset = &reset_shared,
         .init = &init,

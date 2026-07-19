@@ -18,6 +18,8 @@ typedef struct {
     _Atomic uint32_t run_state;
     _Atomic uint32_t run_result;
     _Atomic uint32_t please_run;
+    _Atomic uint32_t please_stop;
+    _Atomic uint32_t please_soak;
     void (* init)();
     void (* reset)();
 
@@ -34,5 +36,12 @@ typedef struct {
 extern mem_tester_t *mem_tester;
 
 extern const char *mem_test_names[];
+
+enum mem_tester_run_state_t {
+    MEM_TESTER_IDLE,
+    MEM_TESTER_RUNNING,
+    MEM_TESTER_FINISHED,
+    MEM_TESTER_RUN_STATES_COUNT,
+};
 
 #endif
