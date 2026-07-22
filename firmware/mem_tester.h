@@ -8,6 +8,7 @@ extern void do_ram_tests();
 
 #include <stdatomic.h>
 #include <stdint.h>
+#include "board.h"
 #include "mem_chip.h"
 
 typedef struct {
@@ -20,6 +21,7 @@ typedef struct {
     _Atomic uint32_t please_run;
     _Atomic uint32_t please_stop;
     _Atomic uint32_t please_soak;
+    _Atomic uint32_t please_seek;
     void (* init)();
     void (* reset)();
 

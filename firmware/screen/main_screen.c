@@ -8,12 +8,14 @@
 enum menu_items_t {
     STANDARD_TEST,
     SOAK_TEST,
+    SEEK_SOAK_TEST,
     NUM_MENU_ITEMS,
 };
 
 static char *listbox_items[NUM_MENU_ITEMS] = {
     [STANDARD_TEST] = "Standard Test",
     [SOAK_TEST] = "Soak Test",
+    [SEEK_SOAK_TEST] = "Seek & Soak Test",
 };
 
 static gui_listbox_t listbox = {
@@ -47,10 +49,16 @@ static menu_t * do_encoder_pushed()
     uint8_t code = listbox.sel_line;
     menu_t *next_screen = chip_screen;
 
-    if (code == SOAK_TEST) {
+    if (code == SOAK_TEST || code == SEEK_SOAK_TEST) {
         mem_tester->shared.please_soak = true;
     } else {
         mem_tester->shared.please_soak = false;
+    };
+
+    if (code == SEEK_SOAK_TEST) {
+        mem_tester->shared.please_seek = true;
+    } else {
+        mem_tester->shared.please_seek = false;
     };
 
     next_screen->enter(&self);

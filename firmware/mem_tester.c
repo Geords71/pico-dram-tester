@@ -402,7 +402,6 @@ uint32_t __no_inline_not_in_flash_func(__run_all)()
         self.shared.run_result = all_tests[i]();
 
         if (self.shared.run_result) {
-            self.shared.run_state = MEM_TESTER_FINISHED;
             return self.shared.run_result;
         }
     }
@@ -446,22 +445,38 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
 
         if (self.shared.please_run)
         {
+            ULOG_INFO("Setting up PIO...");
+            board_ram_power_on();
+            self.chip->setup_pio(mem_tester->speed_idx, mem_tester->variant_idx);
+
+            ULOG_INFO("Testing %s chip at %s...", self.chip->name, self.chip->speed_names[self.speed_idx]);
             ULOG_INFO("Running all memory tests...");
             self.shared.run_state = MEM_TESTER_RUNNING;
             uint32_t return_code = __run_all();
             ULOG_INFO("Tests finished with code:%d, soak:%d, stop:%d...", return_code, self.shared.please_soak, self.shared.please_stop);
 
+            ULOG_INFO("Tearing down PIO...");
+            mem_tester->chip->teardown_pio();
+            board_ram_power_off();
+
             // If we've selected soak mode, the tests are passing, and the
             // user hasn't requested we stop, keep going!
             if (return_code == 0 && self.shared.please_soak && !self.shared.please_stop) {
                 ULOG_INFO("Re-Running all memory tests...");
-            } else {
-                // We either failed, were on;y doing a single run, or the
-                // user asked us to stop.
-                ULOG_INFO("Memory test finished...");
-                self.shared.please_run = 0;
-                self.shared.run_state = MEM_TESTER_FINISHED;
+                continue;
+            } ;
+            
+            if (return_code != 0 && self.shared.please_seek && self.speed_idx < self.chip->delay_sets.len - 1) {
+                ULOG_INFO("Re-Running all memory tests at a slower speed...");
+                self.speed_idx++;
+                continue;
             };
+
+            // We either failed, were only doing a single run, or the
+            // user asked us to stop.
+            ULOG_INFO("Memory test finished...");
+            self.shared.please_run = 0;
+            self.shared.run_state = MEM_TESTER_FINISHED;
         } else {
             busy_wait_ram(100);
         };

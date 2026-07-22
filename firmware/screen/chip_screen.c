@@ -8,6 +8,7 @@
 #include "chip_screen.h"
 #include "variant_screen.h"
 #include "speed_screen.h"
+#include "test_screen.h"
 
 
 static menu_t self;
@@ -49,7 +50,13 @@ static menu_t * do_encoder_pushed()
 {
     mem_tester->chip = chip_list[listbox.sel_line];
 
-    menu_t *next_screen = speed_screen;
+    menu_t *next_screen;
+    if (mem_tester->shared.please_seek) {
+        next_screen = test_screen;
+    } else {
+        next_screen = speed_screen;
+    };
+
     if (mem_tester->chip->variants != NULL) {
         next_screen = variant_screen;
     }

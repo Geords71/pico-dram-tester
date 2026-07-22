@@ -6,7 +6,6 @@
 #include "queue.h"
 #include "mem_tester.h"
 #include "mem_chip.h"
-#include "board.h"
 #include "test_screen.h"
 #include "gui.h"
 #include "logging/logging.h"
@@ -19,7 +18,6 @@ typedef enum {
 static test_screen_state_t state = TESTS_FINISHED;
 
 static menu_t self;
-
 
 static menu_t * do_back_pushed() {
 
@@ -36,26 +34,26 @@ static menu_t * do_return_self() {
     return &self;
 }
 
-static void show() {
+/*static void show() {
     const char *chip_name = mem_tester->chip->short_name;
     const char *chip_speed = mem_tester->chip->speed_names[mem_tester->speed_idx];
     char title[32];
     snprintf(title, 32, "Testing %s@%s...", chip_name, chip_speed);
     paint_gui_test_screen(title);
-}
+}*/
 
 static bool showing_stopping = false;
+static uint32_t last_test = 0;
+static uint32_t last_speed_idx = -1;
+
 static void start_tests() {
+    if (mem_tester->shared.please_seek) mem_tester->speed_idx = 0;
     const mem_chip_t *chip = mem_tester->chip;
 
     mem_tester->shared.reset();
     showing_stopping = false;
-
-    board_ram_power_on();
-
-    ULOG_INFO("Testing %s chip at %s...", chip->name, chip->speed_names[mem_tester->speed_idx]);
-    ULOG_INFO("Setting up PIO...");
-    chip->setup_pio(mem_tester->speed_idx, mem_tester->variant_idx);
+    last_test = 0;
+    last_speed_idx = -1;
 
     // Dispatch to the second core
     ULOG_INFO("Sending all_ram_tests() to the core1 call_queue...");
@@ -64,40 +62,44 @@ static void start_tests() {
 }
 
 static void stop_tests() {
-    ULOG_INFO("Tearing down PIO...");
-    mem_tester->chip->teardown_pio();
-    board_ram_power_off();
     paint_gui_test_screen_completion_status(mem_tester->shared.run_result);
     state = TESTS_FINISHED;
 }
 
-
 static menu_t * do_encoder_pushed() {
     if (state != TESTS_FINISHED) return &self;
-    show();
+    //show();
     start_tests();
     return &self;
 }
 
 static void enter (menu_t *parent) {
     self.parent = parent;
-    show();
+    //show();
     start_tests();
 }
-
-static uint32_t last_test = 0;
 
 static inline void refresh_status (uint8_t cur_test) {
     if (mem_tester->shared.please_stop && !showing_stopping) {
         showing_stopping = true;
         paint_gui_status(120, 35, 110, "        ");
         paint_gui_status(120, 35, 110, "Stopping");
+        return;
     }
 
-    if (cur_test != last_test && !showing_stopping) {
+    if (cur_test != last_test) {
         paint_gui_status(120, 35, 110, "      ");
         paint_gui_status(120, 35, 110, (char *) mem_test_names[cur_test]);
         last_test = cur_test;
+    }
+
+    if (last_speed_idx != mem_tester->speed_idx) {
+        last_speed_idx = mem_tester->speed_idx;
+        const char *chip_name = mem_tester->chip->short_name;
+        const char *chip_speed = mem_tester->chip->speed_names[mem_tester->speed_idx];
+        char title[32];
+        snprintf(title, 32, "Testing %s@%s...", chip_name, chip_speed);
+        paint_gui_test_screen(title);
     }
 }
 
