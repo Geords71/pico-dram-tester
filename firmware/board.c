@@ -40,7 +40,7 @@ void board_init() {
     gpio_set_dir(GPIO_QUAD_BTN, GPIO_IN);
     gpio_set_dir(GPIO_BACK_BTN, GPIO_IN);
 
-    config_t *cfg = config();
+    config_t *cfg = config(true);
 
     if(cfg->led_on)
     {
@@ -129,7 +129,7 @@ uint8_t do_board_encoder(void) {
 
     int32_t diff = encoder_position - encoder_last_position;
 
-    config_t *cfg = config();
+    config_t *cfg = config(false);
     int32_t spc = cfg->enc_states_per_click;
 
     if (diff >= spc) {

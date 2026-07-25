@@ -1,11 +1,6 @@
 #ifndef _MEM_TESTS_H
 #define _MEM_TESTS_H
 
-/*
-extern void init_ram_tests();
-extern void do_ram_tests();
-*/
-
 #include <stdatomic.h>
 #include <stdint.h>
 #include "board.h"
@@ -23,6 +18,7 @@ typedef struct {
     _Atomic uint32_t please_soak;
     _Atomic uint32_t please_seek;
     void (* init)();
+    void (* sleep)();
     void (* reset)();
 
 } mem_tester_shared_state_t;

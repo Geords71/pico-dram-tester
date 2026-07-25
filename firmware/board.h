@@ -2,6 +2,7 @@
 #define _BOARD_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
     clockwise,

@@ -8,8 +8,9 @@ typedef struct
 {
     bool led_on;
     int32_t enc_states_per_click;
+    int32_t tests_pseudo_values;
 } config_t;
 
-config_t * config();
+config_t * config(bool load);
 
 #endif

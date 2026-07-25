@@ -11,7 +11,6 @@
 #include "config.h"
 #include "logging/logging.h"
 #include "menu.h"
-#include "queue.h"
 #include "shared_storage/fat_little_flash.h"
 
 

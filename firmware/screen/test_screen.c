@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include "config.h"
-#include "queue.h"
 #include "mem_tester.h"
 #include "mem_chip.h"
 #include "test_screen.h"
@@ -34,14 +33,6 @@ static menu_t * do_return_self() {
     return &self;
 }
 
-/*static void show() {
-    const char *chip_name = mem_tester->chip->short_name;
-    const char *chip_speed = mem_tester->chip->speed_names[mem_tester->speed_idx];
-    char title[32];
-    snprintf(title, 32, "Testing %s@%s...", chip_name, chip_speed);
-    paint_gui_test_screen(title);
-}*/
-
 static bool showing_stopping = false;
 static uint32_t last_test = 0;
 static uint32_t last_speed_idx = -1;
@@ -55,27 +46,29 @@ static void start_tests() {
     last_test = 0;
     last_speed_idx = -1;
 
-    // Dispatch to the second core
-    ULOG_INFO("Sending all_ram_tests() to the core1 call_queue...");
+    ULOG_INFO("Initializing Mem Tester's testing core (Core1)...");
+    mem_tester->shared.init();
+
+    ULOG_INFO("Asking mem_tester to run tests...");
     state = TESTS_RUNNING;
     mem_tester->run_all();
 }
 
 static void stop_tests() {
+    ULOG_INFO("Shutting Down Second Core for Mem Tester Module...");
+    mem_tester->shared.sleep();
     paint_gui_test_screen_completion_status(mem_tester->shared.run_result);
     state = TESTS_FINISHED;
 }
 
 static menu_t * do_encoder_pushed() {
     if (state != TESTS_FINISHED) return &self;
-    //show();
     start_tests();
     return &self;
 }
 
 static void enter (menu_t *parent) {
     self.parent = parent;
-    //show();
     start_tests();
 }
 

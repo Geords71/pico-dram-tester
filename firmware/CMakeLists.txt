@@ -110,7 +110,6 @@ target_sources(pmemtest PRIVATE
     mem_chip.c
     menu.c
     mem_tester.c
-    queue.c
     pmemtest.c
     mem_chip/ram4027.c
     mem_chip/ram4108.c

@@ -10,13 +10,6 @@
 
 #define CONFIG_FILE_PATH "SYSTEM.CFG"
 
-//uint32_t get_system_overclock()
-//{
-//    return clock_get_hz(clk_sys);
-//}
-
-
-
 static bool parse_int32(const char* key, const char* value, void* out) {
     int32_t* p = (int32_t*)out;
     char* end;
@@ -73,11 +66,13 @@ typedef struct {
 static config_t self = {
     .led_on = true,
     .enc_states_per_click = 2,
+    .tests_pseudo_values = 32,
 };
 
 static const config_field_t config_schema[] = {
-    {"led_on",                     offsetof(config_t, led_on),                     parse_bool},
-    {"enc_states_per_click",       offsetof(config_t, enc_states_per_click),       parse_int32},
+    {"led_on",               offsetof(config_t, led_on),               parse_bool},
+    {"enc_states_per_click", offsetof(config_t, enc_states_per_click), parse_int32},
+    {"tests_psuedo_values",  offsetof(config_t, tests_pseudo_values),  parse_int32},
 };
 
 static void parse_config_line(const char* key, const char* value) {
@@ -132,7 +127,7 @@ static void load() {
     loaded = true;
 }
 
-config_t * config() {
-    if (!loaded) load();
+config_t * config(bool reload) {
+    if (!loaded || reload) load();
     return &self;
 }

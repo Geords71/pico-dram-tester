@@ -1,117 +1,13 @@
-/*#include "pico/types.h"
-#include "mem_chip.h"
-#include "board.h"
-
-typedef enum {
-    MARCH_PHASE_M0 = 0,
-    MARCH_PHASE_M1,
-    MARCH_PHASE_M2,
-    MARCH_PHASE_M3,
-    MARCH_PHASE_M4,
-    MARCH_PHASE_DONE
-} march_phase_t;
-
-typedef struct {
-    march_phase_t phase;
-    bool descending;
-    int32_t cur_addr;
-    int32_t inc;
-    uint32_t failed_bits;   // bitmask of failed bit tests
-    uint32_t cur_bit;
-} marchb_self.t;
-static marchb_self.t marchb_self.
-
-void init_marchb()
-{
-    marchb_self.phase = MARCH_PHASE_M0;
-    marchb_self.descending = false;
-    marchb_self.cur_addr = 0;
-    marchb_self.inc = 1;
-    marchb_self.failed_bits = 0;
-    marchb_self.cur_bit = 0;
-}
-
-typedef struct {
-    int32_t cur_addr;
-    uint value;
-} psrandom_self.t;
-static psrandom_self.t psrandom_self.
-
-void init_psrandom() {
-    psrandom_self.cur_addr = 0;
-    psrandom_self.value = 0;
-}
-
-typedef struct {
-    int32_t cur_addr;
-} refresh_self.t;
-static refresh_self.t refresh_self.
-
-void init_refresh() {
-    refresh_self.cur_addr = 0;
-}
-    
-typedef enum {
-    RAM_TEST_PHASE_SLEEP = 0,
-    RAM_TEST_PHASE_INIT,
-    RAM_TEST_PHASE_MARCHB,
-    RAM_TEST_PHASE_PSEUDO,
-    RAM_TEST_PHASE_REFRESH,
-    RAM_TEST_PHASE_DONE,
-} ram_test_phase_t;
-
-typedef struct {
-    mem_chip_t *mem_chip;                                
-    ram_test_phase_t phase; 
-    uint32_t final_result;
-    bool running;
-
-} mem_tests_self.t;
-static mem_tests_self.t self.
-
-void init_ram_tests(mem_chip_t *mem_chip, uint8_t speed_grade, uint8_t variant)
-{
-
-    self.mem_chip = mem_chip;
-    self.running = false;
-    self.phase = RAM_TEST_PHASE_SLEEP;
-    self.final_result = 0;
-
-    self.mem_chip->setup_pio(speed_grade, variant);
-
-    init_marchb();
-    init_psrandom();
-    init_refresh();
-}
-
-void start_ram_tests() {
-    board_ram_power_on();
-    self.running = true;
-}
-
-void do_ram_tests()
-{
-    if (!self.running) return;
-}
-
-void stop_ram_tests() {
-    self.running = false;
-    self.mem_chip->teardown_pio();
-    board_ram_power_off();
-}*/
-
 #include <stdint.h>
 #include <stdlib.h>
 #include "xoroshiro64starstar.h"
 #include "pico/multicore.h"
-//#include "queue.h"
+#include "config.h"
 #include "mem_chip.h"
 #include "mem_tester.h"
 #include "logging/logging.h"
 
-
 static mem_tester_t self;
-
 static uint ram_bit_mask;
 
 // Wrapper that just calls the read routine for the selected chip
@@ -254,15 +150,21 @@ uint32_t __no_inline_not_in_flash_func(marchb_test)()
     return (uint32_t)failed;
 }
 
-#define PSEUDO_VALUES 64
+#define MAX_PSEUDO_VALUES 64
 #define ARTISANAL_NUMBER 42
-static uint64_t random_seeds[PSEUDO_VALUES];
+static uint64_t random_seeds[MAX_PSEUDO_VALUES];
+static uint32_t pseudo_values;
 
 void __no_inline_not_in_flash_func(psrand_init_seeds)()
 {
-    int i;
+    config_t *cfg = config(false);
+    pseudo_values = cfg->tests_pseudo_values;
+    pseudo_values = (pseudo_values < MAX_PSEUDO_VALUES) ? pseudo_values : MAX_PSEUDO_VALUES;
+
+    ULOG_INFO("Pseudorandom seeds initialized with %d values...", pseudo_values);
+
     psrand_seed(ARTISANAL_NUMBER);
-    for (i = 0; i < PSEUDO_VALUES; i++) {
+    for (int i = 0; i < pseudo_values; i++) {
         random_seeds[i] = psrand_next();
     }
 }
@@ -294,7 +196,7 @@ uint32_t __no_inline_not_in_flash_func(psrandom_test)()
     uint32_t bitsin;
 
     // Write seeded pseudorandom data
-    for (i = 0; i < PSEUDO_VALUES; i++) {
+    for (i = 0; i < pseudo_values; i++) {
         self.shared.cur_subtest = i >> 2;
         self.shared.cur_bit = i & 3;
         psrand_seed(random_seeds[i]);
@@ -392,11 +294,6 @@ uint32_t __no_inline_not_in_flash_func(__run_all)()
 
     psrand_init_seeds();
 
-    //uint32_t failed;
-
-    // Initialize RAM by performing n RAS cycles
-    //march_element(false, 0);
-
     for (uint8_t i = 0; i<MEM_TEST_FUNC_COUNT; i++) {
         self.shared.cur_test = i;
         self.shared.run_result = all_tests[i]();
@@ -445,6 +342,9 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
 
         if (self.shared.please_run)
         {
+            // Re-read config to get any changes to test settings.
+            config_t *cfg = config(true);
+
             ULOG_INFO("Setting up PIO...");
             board_ram_power_on();
             self.chip->setup_pio(mem_tester->speed_idx, mem_tester->variant_idx);
@@ -452,6 +352,7 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
             ULOG_INFO("Testing %s chip at %s...", self.chip->name, self.chip->speed_names[self.speed_idx]);
             ULOG_INFO("Running all memory tests...");
             self.shared.run_state = MEM_TESTER_RUNNING;
+
             uint32_t return_code = __run_all();
             ULOG_INFO("Tests finished with code:%d, soak:%d, stop:%d...", return_code, self.shared.please_soak, self.shared.please_stop);
 
@@ -482,8 +383,13 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
         };
     }
 }
+
 static void init () {
     multicore_launch_core1(core1_entry);
+}
+
+static void sleep() {
+    multicore_reset_core1();
 }
 
 static mem_tester_t self = {
@@ -497,6 +403,7 @@ static mem_tester_t self = {
         .run_result = 0,
         .reset = &reset_shared,
         .init = &init,
+        .sleep = &sleep,
     },
 };
 
