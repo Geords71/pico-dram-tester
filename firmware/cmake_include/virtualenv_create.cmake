@@ -7,10 +7,11 @@ if(CMAKE_HOST_WIN32)
 endif()
 
 message(STATUS "Resolved Python3_EXECUTABLE = ${Python3_EXECUTABLE}")
+message(STATUS "Resolved venv dir to  ${VENV_DIR}")
 
 if(NOT EXISTS "${VENV_DIR}")
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} -m virtualenv "${VENV_DIR}"
+        COMMAND ${Python3_EXECUTABLE} -m venv ${VENV_DIR}
         RESULT_VARIABLE VENV_RESULT
         OUTPUT_VARIABLE VENV_OUT
         ERROR_VARIABLE VENV_ERR
