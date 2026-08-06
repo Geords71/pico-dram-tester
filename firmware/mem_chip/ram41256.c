@@ -76,6 +76,13 @@ void ram41256_ram_write(int addr, int data)
     pio_sm_get(pio, sm);                        // Discard the dummy data bit
 }
 
+static const mem_chip_variants_t ram41256_variants = {
+    .len = 1,
+    .list = {
+        {"41128", ram41256_ram_read, ram41256_ram_write},
+    },
+};
+
 void ram41256_setup_pio(uint speed_grade, uint variant);
 
 void ram41256_teardown_pio()
@@ -92,7 +99,7 @@ const mem_chip_t ram41256_chip = {
     .ram_write = ram41256_ram_write,
     .mem_size = 262144,
     .bits = 1,
-    .variants = NULL,
+    .variants = &ram41256_variants,
     .name = "41256 (256Kx1)",
     .short_name = "41256",
     .timing_family = "ram41256",

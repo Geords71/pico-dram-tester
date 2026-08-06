@@ -19,6 +19,13 @@ static const delay_sets_t ram4116_delay_sets = {
     },
 };
 
+static const mem_chip_variants_t ram4116_variants = {
+    .len = 1,
+    .list = {
+        {"4116", read_ram1b1r_7p, write_ram1b1r_7p},
+    },
+};
+
 void ram4116_setup_pio(uint speed_grade, uint variant);
 
 const mem_chip_t ram4116_chip = {
@@ -28,7 +35,7 @@ const mem_chip_t ram4116_chip = {
     .ram_write = write_ram1b1r_7p,
     .mem_size = 16384,
     .bits = 1,
-    .variants = NULL,
+    .variants = &ram4116_variants,
     .name = "4116 (16Kx1)",
     .short_name = "4116",
     .timing_family = "ram4116",

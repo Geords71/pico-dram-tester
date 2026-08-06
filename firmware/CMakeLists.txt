@@ -71,7 +71,7 @@ target_compile_definitions(pmemtest PRIVATE
 # Optional: Force the compiler to not assume data is in Flash
 target_compile_options(pmemtest PRIVATE -mno-pic-data-is-text-relative)
 
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram4132.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram4132stk.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram41128.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram41256.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram4b1r.pio)
@@ -115,6 +115,7 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram4108.c
     mem_chip/ram4116.c
     mem_chip/ram4132.c
+    mem_chip/ram4132stk.c
     mem_chip/ram4164.c
     mem_chip/ram41128.c
     mem_chip/ram41256.c

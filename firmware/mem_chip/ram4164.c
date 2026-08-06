@@ -45,7 +45,7 @@ void ram4164_setup_pio(uint speed_grade, uint variant) {
 
 
 // Only used for half-qualified 4132 devices
-static const mem_chip_variants_t ram4164_half_chip_variants = {
+/*static const mem_chip_variants_t ram4164_half_chip_variants = {
     .len = 4,
     .list = {
         {"TMS4532xxNL3 (low)", read_ram1b1r_8p_half_lr, write_ram1b1r_8p_half_lr},
@@ -76,4 +76,4 @@ mem_chip_t ram4164_half_chip = {
     .timing_family = "ram4164",
     .delay_sets = ram4164_delay_sets,
     .speed_names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"}
-};
+};*/

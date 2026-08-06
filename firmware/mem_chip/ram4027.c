@@ -19,6 +19,13 @@ static const delay_sets_t ram4027_delay_sets = {
     },
 };
 
+static const mem_chip_variants_t ram4027_variants = {
+    .len = 1,
+    .list = {
+        {"4027", read_ram1b1r_6p, write_ram1b1r_6p},
+    },
+};
+
 void ram4027_setup_pio(uint speed_grade, uint variant);
 
 // This RAM chip configuration
@@ -29,7 +36,7 @@ const mem_chip_t ram4027_chip = {
     .ram_write = write_ram1b1r_6p,
     .mem_size = 4096,
     .bits = 1,
-    .variants = NULL,
+    .variants = &ram4027_variants,
     .name = "4027 (4Kx1 use 4116skt)",
     .short_name = "4027",
     .timing_family = "ram4027",

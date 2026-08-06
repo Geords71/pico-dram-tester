@@ -25,7 +25,7 @@
 
 ; set pins: WE, CAS2, RAS2, CAS1, RAS1.
 .pio_version 0 // only requires PIO version 0
-.program ram4132
+.program ram4132stk
 begin:
     set pins, 0b11111   ; 158.4 raise RAS#. tRAS=151.8ns  ES39.  = 3.3*37=122.1ns
 skip_ras:
@@ -70,6 +70,6 @@ skip_wr2:
 
 % c-sdk {
 
-#define RAM4132_DELAY_SET_COLS 7
+#define RAM4132STK_DELAY_SET_COLS 7
 
 %}

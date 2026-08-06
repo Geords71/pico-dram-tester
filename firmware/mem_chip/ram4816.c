@@ -16,6 +16,13 @@ static const delay_sets_t ram4816_delay_sets = {
     },
 };
 
+static const mem_chip_variants_t ram4816_variants = {
+    .len = 1,
+    .list = {
+        {"4816", read_ram1b1r_7p, write_ram1b1r_7p},
+    },
+};
+
 void ram4816_setup_pio(uint speed_grade, uint variant);
 
 // This RAM chip configuration
@@ -26,7 +33,7 @@ const mem_chip_t ram4816_chip = {
     .ram_write = write_ram1b1r_7p,
     .mem_size = 16384,
     .bits = 1,
-    .variants = NULL,
+    .variants = &ram4816_variants,
     .name = "4816 (16Kx1 use 4164 skt)",
     .short_name = "4816",
     .timing_family = "ram4816",

@@ -14,6 +14,7 @@
 #include "mem_chip/ram4108.h"
 #include "mem_chip/ram4116.h"
 #include "mem_chip/ram4816.h"
+#include "mem_chip/ram4132stk.h"
 #include "mem_chip/ram4132.h"
 #include "mem_chip/ram4164.h"
 #include "mem_chip/ram41256.h"
@@ -32,8 +33,8 @@ const mem_chip_t *chip_list[NUM_CHIPS] = {
     &ram4108_chip,
     &ram4116_chip,
     &ram4816_chip,
-    &ram4132_stk_chip,
-    &ram4164_half_chip,
+    &ram4132stk_chip,
+    &ram4132_chip,
     &ram4164_chip,
     &ram41128_chip,
     &ram41256_chip,

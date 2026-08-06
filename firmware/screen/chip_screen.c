@@ -10,7 +10,6 @@
 #include "speed_screen.h"
 #include "test_screen.h"
 
-
 static menu_t self;
 
 static char *listbox_items[NUM_CHIPS];
@@ -51,15 +50,19 @@ static menu_t * do_encoder_pushed()
     mem_tester->chip = chip_list[listbox.sel_line];
 
     menu_t *next_screen;
-    if (mem_tester->shared.please_seek) {
-        next_screen = test_screen;
-    } else {
-        next_screen = speed_screen;
-    };
 
-    if (mem_tester->chip->variants != NULL) {
+    next_screen = speed_screen;
+
+    if (mem_tester->shared.please_seek) next_screen = test_screen;
+
+    if (mem_tester->chip->variants != NULL && mem_tester->chip->variants->len > 1) {
         next_screen = variant_screen;
-    }
+    } else {
+        // Every type has at least one variant to keep things consistent
+        // from a data and logic perspective. So we need to set variant_idx
+        // here to cope with skipping the variant selction screen.
+        mem_tester->variant_idx = 0;
+    };
 
     next_screen->enter(&self);
     return next_screen;

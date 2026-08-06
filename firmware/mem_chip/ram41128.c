@@ -76,6 +76,13 @@ void ram41128_ram_write(int addr, int data)
     pio_sm_get(pio, sm);                             // Discard the dummy data bit
 }
 
+static const mem_chip_variants_t ram41128_variants = {
+    .len = 1,
+    .list = {
+        {"41128", ram41128_ram_read, ram41128_ram_write},
+    },
+};
+
 // Routines to set up and tear down the PIO program (and the RAM test)
 void ram41128_setup_pio(uint speed_grade, uint variant);
 
@@ -91,9 +98,9 @@ const mem_chip_t ram41128_chip = {
     .teardown_pio = ram41128_teardown_pio,
     .ram_read = ram41128_ram_read,
     .ram_write = ram41128_ram_write,
-    .mem_size = 131072, // 131072
+    .mem_size = 131072,
     .bits = 1,
-    .variants = NULL,
+    .variants = &ram41128_variants,
     .delay_sets = ram41128_delay_sets,
     .name = "41128 (128Kx1)",
     .short_name = "41128",

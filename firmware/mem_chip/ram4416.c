@@ -46,6 +46,13 @@ void ram4416_ram_write(int addr, int data)
     pio_sm_get(pio, sm);                        // Discard the dummy data bit
 }
 
+static const mem_chip_variants_t ram4416_variants = {
+    .len = 1,
+    .list = {
+        {"4416", ram4416_ram_read, ram4416_ram_write},
+    },
+};
+
 void ram4416_setup_pio(uint speed_grade, uint variant);
 
 const mem_chip_t ram4416_chip  = {
@@ -55,7 +62,7 @@ const mem_chip_t ram4416_chip  = {
     .ram_write = ram4416_ram_write,
     .mem_size = 16384,
     .bits = 4,
-    .variants = NULL,
+    .variants = &ram4416_variants,
     .name = "4416 (16Kx4)",
     .short_name = "4416",
     .timing_family = "ram4416",
