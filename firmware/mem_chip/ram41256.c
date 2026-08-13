@@ -8,11 +8,8 @@
 static mem_chip_t self;
 
 static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(self);
-    ULOG_INFO("config done");
+    get_ram_config(&self);
     self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
-    ULOG_INFO("pio setup");
-    flush_logging();
 }
 
 static void teardown_pio() {

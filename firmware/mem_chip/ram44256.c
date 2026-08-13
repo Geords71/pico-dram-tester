@@ -8,7 +8,7 @@
 static mem_chip_t self;
 
 static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(self);
+    get_ram_config(&self);
     self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
 }
 
@@ -18,6 +18,7 @@ static void teardown_pio() {
 
 
 static mem_chip_t self = {
+    .family = fam_4bit_1ras_256k,
     .setup_pio = setup_pio,
     .teardown_pio = teardown_pio,
     .ram_read = NULL,
@@ -54,6 +55,6 @@ mem_chip_t *ram44256_chip()
 
 void ram44256_setup_pio(uint speed_grade, uint variant)
 {
-    get_ram_config(self);
+    get_ram_config(&self);
     ram4b1r_setup_pio(self.delay_sets.list[speed_grade], variant);
 }

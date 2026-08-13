@@ -17,7 +17,7 @@ static int addr_hi_cols(int addr) {
 }
 
 static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(self);
+    get_ram_config(&self);
     self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
 }
 

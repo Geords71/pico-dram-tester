@@ -6,7 +6,7 @@
 static mem_chip_t self;
 
 static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(self);
+    get_ram_config(&self);
     self.family()->setup_pio(self.delay_sets.list[speed_grade]);
 }
 

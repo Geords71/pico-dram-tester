@@ -10,9 +10,6 @@ static uint offset; // Returns offset of starting instruction
 
 static void setup_pio(const delay_set_t delay_set)
 {
-    ULOG_INFO("pio setup 1");
-    return;
-   
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
         get_patched_program(

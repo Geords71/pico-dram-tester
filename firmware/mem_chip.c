@@ -11,15 +11,20 @@ PIO pio;
 uint sm = 0;
 uint offset; // Returns offset of starting instruction
 
-void get_ram_config(mem_chip_t chip) {
+void get_ram_config(mem_chip_t *chip) {
 
     if (mount_shared_storage() != FR_OK) {
         ULOG_WARNING("Shared USB storage could not be mounted. Hard coded delay values will be used.");
         return;
     }
 
-    char filename[12];
-    sprintf(filename, "%s.csv", chip.timing_family);
+    char filename[32];
+    int filename_len = snprintf(filename, sizeof(filename), "%s.csv", chip->timing_family);
+    if (filename_len < 0 || filename_len >= sizeof(filename)) {
+        ULOG_ERROR("Timing filename is too long: %s", chip->timing_family);
+        unmount_shared_storage();
+        return;
+    }
 
     FIL fp;
     bool result = f_open(&fp, filename, FA_READ);
@@ -28,7 +33,7 @@ void get_ram_config(mem_chip_t chip) {
         ULOG_INFO("Reading delay values from %s...", filename);
         uint8_t buffer[512] = {"\0"};
 
-        for (uint8_t row=0; row<chip.delay_sets.len; row++) {
+        for (uint8_t row=0; row<chip->delay_sets.len; row++) {
 
             if (f_gets(buffer, sizeof(buffer), &fp) == NULL) {
                 ULOG_INFO("Reached delay file EOF.");
@@ -40,12 +45,12 @@ void get_ram_config(mem_chip_t chip) {
 
             char *token;
             token = strtok(buffer, ",");
-            for (uint8_t col=0; col<chip.delay_sets.wid; col++) {
+            for (uint8_t col=0; col<chip->delay_sets.wid; col++) {
                 if (token == NULL) {
                     ULOG_ERROR("Encountered unexpected end of line. Continuing to next...");
                     continue;
                 }
-                chip.delay_sets.list[row][col] = atoi(token);
+                chip->delay_sets.list[row][col] = atoi(token);
                 token = strtok(NULL, ",");
             }
         }

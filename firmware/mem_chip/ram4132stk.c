@@ -10,7 +10,7 @@ static const delay_sets_t ram4132stk_delay_sets = {
 };
 
 static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(self);
+    get_ram_config(&self);
     self.family()->setup_pio(self.delay_sets.list[speed_grade]);
 }
 
