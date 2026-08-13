@@ -27,7 +27,7 @@
 ; Combos: 1111 (all high) 1101 (ras low) 0100 (ras, cas, wr low) 0101 (ras, cas low).
 ; Alt                     1011 (ras low) 0010 (ras, cas, wr low) 0011 (ras, cas low).
 .pio_version 0 // only requires PIO version 0
-.program ram41128
+.program fam_1bit_2ras_128k
 begin:
     set pins, 0b1111
     pull block
@@ -67,8 +67,3 @@ skip_wr2:
     in pins, 1
     set pins, 0b1101 [6]
     jmp begin
-
-
-% c-sdk {
-#define RAM41128_DELAY_SET_COLS 7
-%}

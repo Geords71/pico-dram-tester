@@ -42,10 +42,10 @@ static void init_listbox()
 
     cur_chip = mem_tester->chip;
 
-    uint8_t count = cur_chip->variants->len;
+    uint8_t count = cur_chip->variants.len;
 
     for (uint8_t i = 0; i < count; i++) {
-        variant_items[i] = cur_chip->variants->list[i].name;
+        variant_items[i] = cur_chip->variants.list[i].name;
     }
 
     variant_listbox.tot_lines = count;

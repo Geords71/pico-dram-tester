@@ -13,13 +13,20 @@ static uint ram_bit_mask;
 // Wrapper that just calls the read routine for the selected chip
 static int __no_inline_not_in_flash_func(ram_read)(int addr)
 {
-    return self.chip->ram_read(addr);
+    return self.chip->family()->read(
+        self.chip->variants.list[self.variant_idx].addr_func,
+        addr
+    );
 }
 
 // Wrapper that just calls the write routine for the selected chip
 static void __no_inline_not_in_flash_func(ram_write)(int addr, int data)
 {
-    self.chip->ram_write(addr, data);
+    self.chip->family()->write(
+        self.chip->variants.list[self.variant_idx].addr_func,
+        addr,
+        data
+    );
 }
 
 // Low level routines for march-b algorithm
@@ -347,9 +354,9 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
 
             ULOG_INFO("Setting up PIO...");
             board_ram_power_on();
-            self.chip->setup_pio(mem_tester->speed_idx, mem_tester->variant_idx);
+            self.chip->setup_pio(self.speed_idx, self.variant_idx);
 
-            ULOG_INFO("Testing %s chip at %s...", self.chip->name, self.chip->speed_names[self.speed_idx]);
+            ULOG_INFO("Testing %s chip at %s...", self.chip->name, self.chip->delay_sets.names[self.speed_idx]);
             ULOG_INFO("Running all memory tests...");
             self.shared.run_state = MEM_TESTER_RUNNING;
 
@@ -357,7 +364,7 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
             ULOG_INFO("Tests finished with code:%d, soak:%d, stop:%d...", return_code, self.shared.please_soak, self.shared.please_stop);
 
             ULOG_INFO("Tearing down PIO...");
-            mem_tester->chip->teardown_pio();
+            self.chip->teardown_pio();
             board_ram_power_off();
 
             // If we've selected soak mode, the tests are passing, and the

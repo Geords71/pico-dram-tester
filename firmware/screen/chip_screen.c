@@ -10,6 +10,36 @@
 #include "speed_screen.h"
 #include "test_screen.h"
 
+#include "mem_chip/ram4027.h"
+#include "mem_chip/ram4108.h"
+#include "mem_chip/ram4116.h"
+#include "mem_chip/ram4816.h"
+#include "mem_chip/ram4132.h"
+#include "mem_chip/ram4132stk.h"
+#include "mem_chip/ram4164.h"
+#include "mem_chip/ram41256.h"
+#include "mem_chip/ram4408.h"
+#include "mem_chip/ram4416.h"
+#include "mem_chip/ram4464.h"
+#include "mem_chip/ram44256.h"
+#include "mem_chip/ram41128.h"
+
+static mem_chip_t *(*chip_list[NUM_CHIPS])() = {
+    ram4027_chip,
+    ram4108_chip,
+    ram4116_chip,
+    ram4132_chip,
+    ram4132stk_chip,
+    ram4164_chip,
+    ram4408_chip,
+    ram4416_chip,
+    ram4464_chip,
+    ram4816_chip,
+    ram41128_chip,
+    ram41256_chip,
+    ram44256_chip,
+};
+
 static menu_t self;
 
 static char *listbox_items[NUM_CHIPS];
@@ -32,7 +62,7 @@ static void show() {
 static void init_listbox() {
     uint i;
     for (i = 0; i < NUM_CHIPS; i++) {
-        listbox_items[i] = (char *)chip_list[i]->name;
+        listbox_items[i] = chip_list[i]()->name;
     }
 }
 
@@ -47,7 +77,7 @@ static void enter(menu_t *parent)
 
 static menu_t * do_encoder_pushed()
 {
-    mem_tester->chip = chip_list[listbox.sel_line];
+    mem_tester->chip = chip_list[listbox.sel_line]();
 
     menu_t *next_screen;
 
@@ -55,7 +85,7 @@ static menu_t * do_encoder_pushed()
 
     if (mem_tester->shared.please_seek) next_screen = test_screen;
 
-    if (mem_tester->chip->variants != NULL && mem_tester->chip->variants->len > 1) {
+    if (mem_tester->chip->variants.len > 1) {
         next_screen = variant_screen;
     } else {
         // Every type has at least one variant to keep things consistent

@@ -25,7 +25,7 @@
 .pio_version 0
 
 ; Program shared by all 1bit 1 ras chips
-.program ram1b1r
+.program fam_1bit_1ras_64k
 
 ; Notes:
 ; We need to update the address lines and the RAS at the same time.
@@ -76,7 +76,3 @@ skip_ras:
     jmp !y full_transfer  ; 
     out NULL, 8 [7]       ; Wait [7]
     jmp cas_only_transfer ;
-
-% c-sdk {
-#define RAM1B1R_DELAY_SET_COLS 8
-%}

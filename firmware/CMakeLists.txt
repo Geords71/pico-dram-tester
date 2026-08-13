@@ -26,7 +26,6 @@ project(pmemtest)
 
 pico_sdk_init()
 
-
 # Wrap FatFs into a proper target
 add_library(fatfs
     ${PICO_SDK_PATH}/lib/tinyusb/lib/fatfs/source/ff.c
@@ -71,11 +70,12 @@ target_compile_definitions(pmemtest PRIVATE
 # Optional: Force the compiler to not assume data is in Flash
 target_compile_options(pmemtest PRIVATE -mno-pic-data-is-text-relative)
 
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram4132stk.pio)
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram41128.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram41256.pio)
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram4b1r.pio)
-pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_chip/ram1b1r.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_1ras_64k.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_1ras_256k.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_stacked_32k.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_2ras_128k.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_4bit_1ras_256k.pio)
 
 set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
 
@@ -108,6 +108,7 @@ target_sources(pmemtest PRIVATE
     logging/ulog.c
     logging/logging.c
     mem_chip.c
+    mem_family.c
     menu.c
     mem_tester.c
     pmemtest.c
@@ -124,6 +125,11 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram4464.c
     mem_chip/ram44256.c
     mem_chip/ram4816.c
+    mem_family/fam_1bit_1ras_64k.c
+    mem_family/fam_1bit_1ras_256k.c
+    mem_family/fam_1bit_stacked_32k.c
+    mem_family/fam_4bit_1ras_256k.c
+    mem_family/fam_1bit_2ras_128k.c
     screen/chip_screen.c
     screen/main_screen.c
     screen/speed_screen.c

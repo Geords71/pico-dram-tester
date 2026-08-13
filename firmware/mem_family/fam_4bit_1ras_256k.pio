@@ -1,5 +1,5 @@
 ;
-; 44256/64 Test Program
+; 44256/64/16/08 Test Program
 ;
 
 ; fixme: how to keep OE high normally (except for read)
@@ -27,9 +27,14 @@
 ; SP16 = WE#
 
 ; set pins: WR, CAS, RAS
-.pio_version 1 // PIO version 1 since we need to mov pindirs
-.program ram4b1r
+
+// PIO version 1 since we need to mov pindirs
+.pio_version 1
+
+.program fam_4bit_1ras_256k
+
 ; Note: We need to update the address lines and the RAS# at the same time.
+main:    
     jmp begin
 full_transfer:        ; (delay val at end of instr)
     nop [1]           ; [0] ES44
@@ -71,8 +76,3 @@ skip_ras:
     jmp !y full_transfer ; 171.6 ES43
     out NULL, 14 [7]           ; 174.9 Throw out row address
     jmp cas_only_transfer ; 178.2 Fast page mode tCP=22*3.3=72.6ns
-
-
-% c-sdk {
-#define RAM4B1R_DELAY_SET_COLS 8
-%}

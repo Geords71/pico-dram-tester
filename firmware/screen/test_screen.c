@@ -89,7 +89,7 @@ static inline void refresh_status (uint8_t cur_test) {
     if (last_speed_idx != mem_tester->speed_idx) {
         last_speed_idx = mem_tester->speed_idx;
         const char *chip_name = mem_tester->chip->short_name;
-        const char *chip_speed = mem_tester->chip->speed_names[mem_tester->speed_idx];
+        const char *chip_speed = mem_tester->chip->delay_sets.names[mem_tester->speed_idx];
         char title[32];
         snprintf(title, 32, "Testing %s@%s...", chip_name, chip_speed);
         paint_gui_test_screen(title);

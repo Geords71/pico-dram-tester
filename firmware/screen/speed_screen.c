@@ -40,7 +40,7 @@ static void init_listbox()
     }
     cur_chip = mem_tester->chip;
 
-    speed_listbox.items = (char **)cur_chip->speed_names;
+    speed_listbox.items = (char **)cur_chip->delay_sets.names;
     speed_listbox.tot_lines = cur_chip->delay_sets.len;
     speed_listbox.sel_line = 0;
     speed_listbox.start_line = 0;

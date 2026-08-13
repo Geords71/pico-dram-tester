@@ -3,15 +3,14 @@
 #include <stdint.h>
 #include "pico/types.h"
 #include "hardware/pio.h"
-#include "ram1b1r.pio.h"
+#include "mem_family.h"
 
 #define NUM_CHIPS 13
 #define MEMCHIP_MAX_VARIANTS 8
-#define MEMCHIP_MAX_DELAY_SET_ROWS 8
-#define MEMCHIP_MAX_DELAY_SET_COLS 8
 
 typedef struct mem_chip_variant_t {
     char *name;
+    const int (*addr_func)(int addr);
     const int (*ram_read)(int);
     const void (*ram_write)(int, int);
 } mem_chip_variant_t;
@@ -21,35 +20,26 @@ typedef struct {
     const mem_chip_variant_t list[MEMCHIP_MAX_VARIANTS];
 } mem_chip_variants_t;
 
-typedef uint8_t delay_set_t[MEMCHIP_MAX_DELAY_SET_COLS];
-typedef struct {
-    uint8_t len;
-    uint8_t wid;
-    delay_set_t list[MEMCHIP_MAX_DELAY_SET_ROWS];
-} delay_sets_t;
 
 typedef struct {
+    const mem_family_t *(*family)();
     void (*setup_pio)(uint speed_grade, uint variant);
     void (*teardown_pio)();
     int (*ram_read)(int addr);
     void (*ram_write)(int addr, int data);
     uint32_t mem_size;
     uint32_t bits;
-    const mem_chip_variants_t *variants;
-    const char *name;
+    const mem_chip_variants_t variants;
+    char *name;
     const char *short_name;
     const char *timing_family;
     delay_sets_t delay_sets;
-    char *speed_names[];
 } mem_chip_t;
-
-extern const mem_chip_t *chip_list[NUM_CHIPS];
 
 extern PIO pio;
 extern uint sm;
 extern uint offset; // Returns offset of starting instruction
 
-extern struct pio_program *get_patched_program(const struct pio_program *program, const uint8_t *delay_set, uint8_t delay_set_size);
 extern int read_ram1b1r_6p(int addr);
 extern void write_ram1b1r_6p(int addr, int data);
 
@@ -79,4 +69,5 @@ extern void ram1b1r_teardown_pio();
 extern void ram4b1r_teardown_pio();
 
 extern void get_ram_config(const mem_chip_t chip);
+
 #endif

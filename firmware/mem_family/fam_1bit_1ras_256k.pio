@@ -1,4 +1,4 @@
-; 41256 Chip
+; 1 bit, 1 ras 41256 Chip
 
 ; Pin Assignments
 ; SP0  = A0
@@ -63,8 +63,3 @@ skip_ras:
     jmp !y full_transfer
     out NULL, 9 [7]
     jmp cas_only_transfer
-
-
-% c-sdk {
-#define FAM_1BIT_1RAS_256K_DELAY_SET_COLS 8
-%}

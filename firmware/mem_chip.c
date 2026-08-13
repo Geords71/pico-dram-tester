@@ -3,73 +3,13 @@
 #include <string.h>
 #include "mem_chip.h"
 #include "hardware/pio.h"
-#include "ram1b1r.pio.h"
-#include "ram4b1r.pio.h"
 #include "ff.h"
 #include "shared_storage.h"
 #include "logging.h"
 
-// Defined RAM pio programs
-#include "mem_chip/ram4027.h"
-#include "mem_chip/ram4108.h"
-#include "mem_chip/ram4116.h"
-#include "mem_chip/ram4816.h"
-#include "mem_chip/ram4132stk.h"
-#include "mem_chip/ram4132.h"
-#include "mem_chip/ram4164.h"
-#include "mem_chip/ram41256.h"
-#include "mem_chip/ram4408.h"
-#include "mem_chip/ram4416.h"
-#include "mem_chip/ram4464.h"
-#include "mem_chip/ram44256.h"
-#include "mem_chip/ram41128.h"
-
 PIO pio;
 uint sm = 0;
 uint offset; // Returns offset of starting instruction
-
-const mem_chip_t *chip_list[NUM_CHIPS] = {
-    &ram4027_chip,
-    &ram4108_chip,
-    &ram4116_chip,
-    &ram4816_chip,
-    &ram4132stk_chip,
-    &ram4132_chip,
-    &ram4164_chip,
-    &ram41128_chip,
-    &ram41256_chip,
-    &ram4408_chip,
-    &ram4416_chip,
-    &ram4464_chip,
-    &ram44256_chip,
-};
-
-
-struct pio_program *get_patched_program(const struct pio_program *program, const uint8_t *delay_set, uint8_t delay_set_size)
-{
-    static struct pio_program patched_program;
-    static uint16_t patched_instructions[PIO_INSTRUCTION_COUNT];
-
-    patched_program.length = program->length;
-    patched_program.origin = program->origin;
-    patched_program.pio_version = program->pio_version;
-    patched_program.used_gpio_ranges = program->used_gpio_ranges;
-
-    for (uint8_t i = 0; i < program->length; i++) {
-        uint16_t instruction = program->instructions[i];
-        uint8_t field = (instruction >> 8) & 0x1f;
-
-        // 0 is reserved for instructions that don't use this feature
-        if ((field > 0) && (field < delay_set_size)) {
-            instruction = instruction & 0xe0ff;
-            instruction |= ((delay_set[field] & 0x1f) << 8);
-        }
-        patched_instructions[i] = instruction;
-    }
-
-    patched_program.instructions = patched_instructions;
-    return &patched_program;
-}
 
 void get_ram_config(mem_chip_t chip) {
 
@@ -120,94 +60,6 @@ void get_ram_config(mem_chip_t chip) {
     unmount_shared_storage();
 }
 
-void ram1b1r_setup_pio(const delay_set_t delay_set, uint8_t variant)
-{
-    uint pin = 5;
-    bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
-        get_patched_program(
-            &ram1b1r_program, delay_set, RAM1B1R_DELAY_SET_COLS
-        ),
-        &pio, &sm, &offset, pin, 17, true
-    );
-
-    // Set up 17 total pins
-    for (uint count = 0; count < 17; count++) {
-        pio_gpio_init(pio, pin + count);
-        gpio_set_slew_rate(pin + count, GPIO_SLEW_RATE_FAST);
-        gpio_set_drive_strength(pin + count, GPIO_DRIVE_STRENGTH_4MA);
-    }
-
-    pio_sm_set_consecutive_pindirs(pio, sm, pin, 13, true); // true=output
-    pio_sm_set_consecutive_pindirs(pio, sm, pin + 16, 1, false); // input
-
-    pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
-
-    pio_sm_config c = ram1b1r_program_get_default_config(offset);
-
-    // A0, A1, A2, A3, A4, A5, A6, A7, nc, D, WR, RAS, CAS, nc, nc, nc, IN
-    sm_config_set_out_pins(&c, pin, 10);
-    sm_config_set_set_pins(&c, pin + 10, 3); // Max is 5.
-    sm_config_set_in_pins(&c, pin + 16);
-
-    // Shift right, Autopull off, 20 bits (1 + 1 + 8 + 10) at a time
-    sm_config_set_out_shift(&c, true, false, 20);
-
-    // Shift left, Autopull on, 1 bit
-    sm_config_set_in_shift(&c, false, false, 1);
-
- //   hw_set_bits(&pio->input_sync_bypass, 1u << pin); to bypass synchronization on an input
-    pio_sm_init(pio, sm, offset, &c);
-    pio_sm_set_enabled(pio, sm, true);
-}
-
-void ram4b1r_setup_pio(const delay_set_t delay_set, uint8_t variant)
-{
-    uint pin = 5;
-    bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
-        get_patched_program(
-            &ram4b1r_program, delay_set, RAM4B1R_DELAY_SET_COLS
-        ),
-        &pio, &sm, &offset, pin, 17, true);
-    
-    // Set up 17 total pins
-    for (uint count = 0; count < 17; count++) {
-        pio_gpio_init(pio, pin + count);
-        gpio_set_slew_rate(pin + count, GPIO_SLEW_RATE_FAST);
-        gpio_set_drive_strength(pin + count, GPIO_DRIVE_STRENGTH_4MA);
-    }
-
-    pio_sm_set_consecutive_pindirs(pio, sm, pin + 4, 17, true); // true=output
-    pio_sm_set_consecutive_pindirs(pio, sm, pin, 4, false); // false=input
-
-    pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
-
-    pio_sm_config c = ram4b1r_program_get_default_config(offset);
-
-    sm_config_set_out_pins(&c, pin, 14);
-    sm_config_set_set_pins(&c, pin + 14, 3); // Max is 5.
-    sm_config_set_in_pins(&c, pin);
-
-    // Shift right, Autopull off, 30 bits (1 + 1 + 14 + 14) at a time
-    sm_config_set_out_shift(&c, true, false, 30);
-
-    // Shift left, Autopull on, 4 bits
-    sm_config_set_in_shift(&c, false, false, 4);
-
-    hw_set_bits(&pio->input_sync_bypass, 0xf << pin); //to bypass synchronization on an input
-    pio_sm_init(pio, sm, offset, &c);
-    pio_sm_set_enabled(pio, sm, true);
-}
-void ram1b1r_teardown_pio()
-{
-    pio_sm_set_enabled(pio, sm, false);
-    pio_remove_program_and_unclaim_sm(&ram1b1r_program, pio, sm, offset);
-}
-
-void ram4b1r_teardown_pio()
-{
-    pio_sm_set_enabled(pio, sm, false);
-    pio_remove_program_and_unclaim_sm(&ram4b1r_program, pio, sm, offset);
-}
 
 int read_ram1b1r_8p(int addr)
 {
@@ -252,7 +104,7 @@ int calc_6p(int addr) {
     // Because we only have six pins, need to do some bit shifting to be able
     // to re-use the 8pin read function. This works because what are 7th 
     // and 8th pins on 64k chips are not used for addresses on 4k examples.
-    // 4k chips like 4027 and 4015 use the 4116 socket on this board.
+    // 4k chips like 4027 use the 4116 socket on this board.
     // The 4027's chip select pin is in the same location as address pin 6
     // on a 4116. So we need to always have this pin pulled low when testing
     // a 4027 in the 4116b socket. (Chip Select is active low). e.g.
