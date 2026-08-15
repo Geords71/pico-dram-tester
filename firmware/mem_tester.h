@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
     void (*run_all)();
-    const mem_chip_t *chip;                                
+    mem_chip_t *chip;                                
     uint16_t variant_idx;
     uint16_t speed_idx;
     mem_tester_shared_state_t shared;

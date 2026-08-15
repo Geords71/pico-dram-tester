@@ -1,68 +1,70 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4132.h"
-#include "mem_family/fam_1bit_1ras_64k.h"
-#include "mem_chip.h"
+#include "mem_family/fam_1bit_1ras_256k.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4132"
 
-static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
+static inline const mem_family_t *get_family(){
+    return fam_1bit_1ras_256k();
 }
 
-static void teardown_pio() {
-    self.family()->teardown_pio();
+#define ROW_PINS_4532  7
+#define COL_PINS_4532  8
+#define ROW_MASK_4532 ((1u << ROW_PINS_4532) -1)
+#define COL_MASK_4532 ((1u << COL_PINS_4532) -1)
+
+static inline int addr_4532_lo(int addr) {
+    // A7 on row selects the good half: 0->lo and 1->hi.
+    // A7 is implicitly 'lo' for the row address here.
+    return (
+        (addr & ROW_MASK_4532) |
+        (((addr >> ROW_PINS_4532) & COL_MASK_4532) << get_family()->addr_pins)
+    );  
 }
 
-static int addr_lo_rows(int addr) {
-    // Funky: The column address starts at the MSB of the low (row) byte. So
-    // we need to: shift column bits up by one; blat row byte's MSB; and then
-    // AND/OR these values together using appropriate masking.
-    return (addr & 0x007f) | ((addr << 1) & 0xff00);
+static inline int addr_4532_hi(int addr) {
+    // Re-use the 'lo' logic and just OR the bit to select the high rows!
+    return (addr_4532_lo(addr) | (1u << ROW_PINS_4532));
 }
 
-static int addr_hi_rows(int addr) {
-    // Funky: The column address starts at the MSB of the low (row) byte. So
-    // we need to: shift column bits up by one; set row byte's MSB; and then
-    // AND/OR these values together using appropriate masking.
-    return ((addr & 0x007f) | 0x0080) | ((addr << 1) & 0xff00);
+#define ROW_PINS_3732  8
+#define COL_PINS_3732  7
+#define ROW_MASK_3732 ((1u << ROW_PINS_3732) -1)
+#define COL_MASK_3732 ((1u << COL_PINS_3732) -1)
+
+static inline int addr_3732_lo(int addr) {
+    // A7 on column selects the good half: 0->lo and 1->hi.
+    // A7 is implicitly 'lo' for the column address here.
+    return (
+        (addr & ROW_MASK_3732) |
+        (((addr >> ROW_PINS_3732) & COL_MASK_3732) << get_family()->addr_pins)
+    );  
 }
 
-static int addr_lo_cols(int addr) {
-    // Easy: Force the msb to 0 on the high byte - which is the column. 
-    return addr & 0x7fff;
+static inline int addr_3732_hi(int addr) {
+    // Re-use the 'lo' logic and just OR the bit to select the high rows!
+    return (addr_3732_lo(addr) | (1u << (get_family()->addr_pins + COL_PINS_3732)));
 }
-
-static int addr_hi_cols(int addr) {
-    // Easy: Force the msb to 1 on the high byte - which is the column. 
-    return (addr & 0xff) | ((addr & 0x7f00) | 0x8000);
-}
-
 
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_64k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 32768,
     .bits = 1,
-    .name = "4132 (32Kx1 use 4164skt)",
-    .short_name = "4132",
-    .timing_family = "ram4132",
+    .name = SHORT_NAME " (32Kx1 use 4164skt)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 4,
         .list = {
-            {"TMS4532xxNL3 (low)",  addr_lo_rows, NULL, NULL},
-            {"TMS4532xxNL4 (high)", addr_hi_rows, NULL, NULL},
-            {"M3732L (low)",  addr_lo_cols, NULL, NULL},
-            {"M3732H (high)", addr_hi_cols, NULL, NULL},
+            {"TMS4532xxNL3 (low)",  addr_4532_hi},
+            {"TMS4532xxNL4 (high)", addr_4532_lo},
+            {"M3732L (low)",  addr_3732_lo},
+            {"M3732H (high)", addr_3732_hi},
         },
     },
     .delay_sets = {
         .len = 6,
-        .wid = FAM_1BIT_1RAS_64K_DELAY_SET_COLS,
+        .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"},
         .list = {
             {0,  0, 15, 3, 11,  4,  0, 0}, // 100ns - tested on km4164b-10 No margin applied yet...

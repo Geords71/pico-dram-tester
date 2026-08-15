@@ -1,38 +1,21 @@
 #include <stdint.h>
-#include "pico/types.h"
-#include "mem_chip.h"
 #include "ram41128.h"
 #include "mem_family/fam_1bit_2ras_128k.h"
-#include "logging.h"
 
-static mem_chip_t self;
-
-static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(&self);
-    ULOG_INFO("Setting up PIO");
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
-}
-
-static void teardown_pio () {
-    self.family()->teardown_pio();
-}
+#define SHORT_NAME "41128"
 
 // This RAM chip configuration
 static mem_chip_t self = {
-    .family = fam_1bit_2ras_128k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = fam_1bit_2ras_128k,
     .mem_size = 131072,
     .bits = 1,
-    .name = "41128 (128Kx1)",
-    .short_name = "41128",
-    .timing_family = "ram41128",
+    .name = SHORT_NAME " (128Kx1)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"41128", NULL, NULL, NULL},
+            {SHORT_NAME, NULL},
         },
     },
     .delay_sets = {

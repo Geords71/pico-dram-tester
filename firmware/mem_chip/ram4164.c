@@ -1,41 +1,40 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4164.h"
-#include "mem_family/fam_1bit_1ras_64k.h"
-#include "mem_chip.h"
+#include "mem_family/fam_1bit_1ras_256k.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4164"
 
-static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
+static inline const mem_family_t *get_family(){
+    return fam_1bit_1ras_256k();
 }
 
-static void teardown_pio () {
-    self.family()->teardown_pio();
+#define ADDR_PINS 8
+#define ROW_MASK ((1u << ADDR_PINS) -1)
+
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        (((addr >> ADDR_PINS) & ROW_MASK) << get_family()->addr_pins)
+    );  
 }
 
 // This RAM chip configuration
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_64k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 65536,
     .bits = 1,
-    .name = "4164 (64Kx1)",
-    .short_name = "4164",
-    .timing_family = "ram4164",
+    .name = SHORT_NAME " (64Kx1)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"4164", NULL, NULL, NULL},
+            {SHORT_NAME, addr_func},
         },
     },
     .delay_sets = {
         .len = 6,
-        .wid = FAM_1BIT_1RAS_64K_DELAY_SET_COLS,
+        .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"},
         .list = {
             {0,  0, 15, 3, 11,  4,  0, 0}, // 100ns - tested on km4164b-10 No margin applied yet...

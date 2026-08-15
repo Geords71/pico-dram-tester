@@ -1,6 +1,5 @@
 #include "mem_family.h"
 #include "stdint.h"
-#include "logging.h"
 
 struct pio_program *get_patched_program(const struct pio_program *program, const uint8_t *delay_set, uint8_t delay_set_size)
 {
@@ -25,6 +24,5 @@ struct pio_program *get_patched_program(const struct pio_program *program, const
     }
 
     patched_program.instructions = patched_instructions;
-    ULOG_INFO("patched");
     return &patched_program;
 }

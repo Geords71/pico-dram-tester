@@ -1,51 +1,52 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4108.h"
-#include "mem_chip.h"
-#include "mem_family/fam_1bit_1ras_64k.h"
+#include "mem_family/fam_1bit_1ras_256k.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4108"
 
-static int addr_lo_cols(int addr) {
+static inline const mem_family_t *get_family(){
+    return fam_1bit_1ras_256k();
+}
+
+#define ADDR_PINS  7
+#define ROW_MASK ((1u << ADDR_PINS) -1)
+
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        // Pin A0 for column select dictates if we are accessing lo or hi half.
+        // so the column address is shifted left by an extra bit to make room.
+        (((addr >> ADDR_PINS) & ROW_MASK) << (get_family()->addr_pins + 1))
+    );  
+}
+
+static inline int addr_lo_cols(int addr) {
     // Pin A0 for column select dictates if we are accessing low or high half.
-    return (addr & 0x007f) | ((addr << 2) & 0x7e00);
+    return addr_func(addr) | 0x00;
 }
 
-static int addr_hi_cols(int addr) {
+static inline int addr_hi_cols(int addr) {
     // Pin A0 for column select dictates if we are accessing low or high half.
-    return (addr & 0x007f) | ((addr << 2) & 0x7e00) | 0x100;
-}
-
-static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
-}
-
-static void teardown_pio() {
-    self.family()->teardown_pio();
+    return addr_func(addr) | 0x100;
 }
 
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_64k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 8192,
     .bits = 1,
-    .name = "4108 (8Kx1 use 4116skt)",
-    .short_name = "4108",
-    .timing_family = "ram4108",
+    .name = SHORT_NAME " (8Kx1 use 4116skt)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 2,
         .list = {
-            {"MK4108-40 (low)",  addr_lo_cols, NULL, NULL},
-            {"MK4108-41 (high)", addr_hi_cols, NULL, NULL},
+            {"MK" SHORT_NAME "-40 (low)",  addr_lo_cols},
+            {"MK" SHORT_NAME "-41 (high)", addr_hi_cols},
         },
     },
     .delay_sets = {
         .len = 6,
-        .wid = FAM_1BIT_1RAS_64K_DELAY_SET_COLS,
+        .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"},
         .list = {
             {0, 0, 18,  3,  8,  6, 0, 0}, // 100ns

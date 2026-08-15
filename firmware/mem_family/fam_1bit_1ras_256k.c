@@ -2,13 +2,12 @@
 #include "hardware/pio.h"
 #include "fam_1bit_1ras_256k.h"
 #include "fam_1bit_1ras_256k.pio.h"
-#include "logging.h"
 
 static PIO pio;
 static uint sm = 0;
 static uint offset; // Returns offset of starting instruction
 
-static void setup_pio(const delay_set_t delay_set)
+static void setup_pio(const uint8_t *delay_set)
 {
     uint pin = 5;
     bool rc = pio_claim_free_sm_and_add_program_for_gpio_range(
@@ -91,8 +90,9 @@ static const mem_family_t self = {
     .teardown_pio = teardown_pio,
     .read = read,
     .write = write,
+    .addr_pins = 9,
 };
 
-const mem_family_t *fam_1bit_1ras_256k() {
+inline const mem_family_t *fam_1bit_1ras_256k() {
     return &self;
 }

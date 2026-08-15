@@ -1,37 +1,21 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram41256.h"
 #include "mem_family/fam_1bit_1ras_256k.h"
-#include "mem_chip.h"
-#include "logging.h"
 
-static mem_chip_t self;
-
-static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
-}
-
-static void teardown_pio() {
-    self.family()->teardown_pio();
-}
+#define SHORT_NAME "41256"
 
 // This RAM chip configuration
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_256k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = fam_1bit_1ras_256k,
     .mem_size = 262144,
     .bits = 1,
-    .name = "41256 (256Kx1)",
-    .short_name = "41256",
-    .timing_family = "ram41256",
+    .name = SHORT_NAME " (256Kx1)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"41256", NULL, NULL, NULL},
+            {SHORT_NAME, NULL},
         },
     },
     .delay_sets = {

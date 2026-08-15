@@ -13,7 +13,7 @@ static uint ram_bit_mask;
 // Wrapper that just calls the read routine for the selected chip
 static int __no_inline_not_in_flash_func(ram_read)(int addr)
 {
-    return self.chip->family()->read(
+    return self.chip->get_family()->read(
         self.chip->variants.list[self.variant_idx].addr_func,
         addr
     );
@@ -22,7 +22,7 @@ static int __no_inline_not_in_flash_func(ram_read)(int addr)
 // Wrapper that just calls the write routine for the selected chip
 static void __no_inline_not_in_flash_func(ram_write)(int addr, int data)
 {
-    self.chip->family()->write(
+    self.chip->get_family()->write(
         self.chip->variants.list[self.variant_idx].addr_func,
         addr,
         data
@@ -354,7 +354,10 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
 
             ULOG_INFO("Setting up PIO...");
             board_ram_power_on();
-            self.chip->setup_pio(self.speed_idx, self.variant_idx);
+            mem_chip_load_config(self.chip);
+
+            const uint8_t *delay_set = self.chip->delay_sets.list[self.speed_idx];
+            self.chip->get_family()->setup_pio(delay_set);
 
             ULOG_INFO("Testing %s chip at %s...", self.chip->name, self.chip->delay_sets.names[self.speed_idx]);
             ULOG_INFO("Running all memory tests...");
@@ -364,7 +367,7 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
             ULOG_INFO("Tests finished with code:%d, soak:%d, stop:%d...", return_code, self.shared.please_soak, self.shared.please_stop);
 
             ULOG_INFO("Tearing down PIO...");
-            self.chip->teardown_pio();
+            self.chip->get_family()->teardown_pio();
             board_ram_power_off();
 
             // If we've selected soak mode, the tests are passing, and the

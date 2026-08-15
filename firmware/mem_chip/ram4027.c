@@ -1,50 +1,39 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4027.h"
-#include "mem_family/fam_1bit_1ras_64k.h"
+#include "mem_family/fam_1bit_1ras_256k.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4027"
 
-static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
+static inline const mem_family_t *get_family(){
+    return fam_1bit_1ras_256k();
 }
 
-static void teardown_pio () {
-    self.family()->teardown_pio();
-}
+#define ADDR_PINS  6
+#define ROW_MASK ((1u << ADDR_PINS) -1)
 
-static int addr_func(int addr) {
-    // Because we only have six pins, need to do some bit shifting to be able
-    // to re-use the 8pin read function. This works because what are 7th 
-    // and 8th pins on 64k chips are not used for addresses on 4k examples.
-    // 4k chips like 4027 use the 4116 socket on this board.
-    // The 4027's chip select pin is in the same location as address pin 6
-    // on a 4116. So we need to always have this pin pulled low when testing
-    // a 4027 in the 4116b socket. (Chip Select is active low). e.g.
-    return (addr & 0x003f) | ((addr << 2) & 0x3f00);
-};
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        (((addr >> ADDR_PINS) & ROW_MASK) << get_family()->addr_pins)
+    );  
+}
 
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_64k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 4096,
     .bits = 1,
-    .name = "4027 (4Kx1 use 4116skt)",
-    .short_name = "4027",
-    .timing_family = "ram4027",
+    .name = SHORT_NAME " (4Kx1 use 4116skt)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"4027", addr_func, NULL, NULL},
+            {SHORT_NAME, addr_func},
         },
     },
     .delay_sets = {
         .len = 5,
-        .wid = FAM_1BIT_1RAS_64K_DELAY_SET_COLS,
+        .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"120ns", "150ns", "200ns", "250ns", "300ns"},
         .list = {
             {0, 31, 21, 1,  8,  9,  3,  8}, // 120ns

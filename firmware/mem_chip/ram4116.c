@@ -1,47 +1,39 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4116.h"
-#include "mem_family/fam_1bit_1ras_64k.h"
-#include "mem_chip.h"
+#include "mem_family/fam_1bit_1ras_256k.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4116"
 
-static void setup_pio(uint speed_grade, uint variant) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
+static inline const mem_family_t *get_family(){
+    return fam_1bit_1ras_256k();
 }
 
-static void teardown_pio() {
-    self.family()->teardown_pio();
-}
+#define ADDR_PINS  7
+#define ROW_MASK ((1u << ADDR_PINS) -1)
 
-static int addr_func(int addr) {
-    // Because we only have seven pins, need to do some bit shifting to be able
-    // to re-use the 8pin read function. This works because what is the 8th pin
-    // on 64k chips is not connected on 16k examples.
-    return (addr & 0x007f) | ((addr << 1) & 0x7f00);
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        (((addr >> ADDR_PINS) & ROW_MASK) << (get_family()->addr_pins))
+    );  
 }
 
 static mem_chip_t self = {
-    .family = fam_1bit_1ras_64k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 16384,
     .bits = 1,
-    .name = "4116 (16Kx1)",
-    .short_name = "4116",
-    .timing_family = "ram4116",
+    .name = SHORT_NAME " (16Kx1)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"4116", addr_func, read_ram1b1r_7p, write_ram1b1r_7p},
+            {SHORT_NAME, addr_func},
         },
     },
     .delay_sets = {
         .len = 6,
-        .wid = FAM_1BIT_1RAS_64K_DELAY_SET_COLS,
+        .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"100ns", "120ns", "150ns", "200ns", "250ns", "300ns"},
         .list = {
             {0, 0, 18,  3,  8,  6, 0, 0}, // 100ns

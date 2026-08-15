@@ -103,6 +103,6 @@ static const mem_family_t self = {
     .write = write,
 };
 
-const mem_family_t *fam_1bit_stacked_32k() {
+inline const mem_family_t *fam_1bit_stacked_32k() {
     return &self;
 }

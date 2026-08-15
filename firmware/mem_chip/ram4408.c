@@ -1,19 +1,11 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4408.h"
 #include "mem_family/fam_4bit_1ras_256k.h"
-#include "mem_chip.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4408"
 
-static void setup_pio(uint speed_grade, uint variant)
-{
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
-}
-
-static void teardown_pio() {
-    self.family()->teardown_pio();
+static inline const mem_family_t *get_family(){
+    return fam_4bit_1ras_256k();
 }
 
 // A TMS4408 has:
@@ -22,34 +14,45 @@ static void teardown_pio() {
 // A7 is not part of either — it’s the top/bottom select bit
 // A7 is 1 for Bottom and 0 for Top. Because...
 
-static int addr_4408t(int addr)
-{
-    //     Row               Column                   Bank select: A7=0
-    return (addr & 0x007f) | ((addr << 1) & 0x7f00) | 0x00;  
+// The mem family this chip is part of has nine shared row/col pins (A0-A8).
+// So we need to send it an 18bit number with top nine bits for the column, and
+// the bottom nine bits for the row. We'll shift our 14 bit number around
+// accordingly.
+
+#define ROW_PINS  8
+#define COL_PINS  6
+#define ROW_MASK ((1u << ROW_PINS) -1)
+#define COL_MASK ((1u << COL_PINS) -1)
+
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        (((addr >> ROW_PINS) & COL_MASK) << get_family()->addr_pins)
+    );  
 }
 
-static int addr_4408b(int addr)
+static inline int addr_t(int addr)
 {
-    //     Row               Column                   Bank select: A7=1
-    return (addr & 0x007f) | ((addr << 1) & 0x7f00) | 0x80;  
+    return addr_func(addr) | 0x00;  
+}
+
+static inline int addr_b(int addr)
+{
+    return addr_func(addr) | 0x80;  
 }
 
 static mem_chip_t self = {
-    .family = fam_4bit_1ras_256k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 8192,
     .bits = 4,
-    .name = "4408 (8Kx4 use 4416skt)",
-    .short_name = "4408",
-    .timing_family = "ram4408",
+    .name = SHORT_NAME " (8Kx4 use 4416skt)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 2,
         .list = {
-            {"TMS4408T (Top)",    addr_4408t, NULL, NULL},
-            {"TMS4408B (Bottom)", addr_4408b, NULL, NULL},
+            {"TMS" SHORT_NAME "T (Top)",    addr_t},
+            {"TMS" SHORT_NAME "B (Bottom)", addr_b},
         },
     },
     .delay_sets = {

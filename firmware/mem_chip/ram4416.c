@@ -1,40 +1,36 @@
 #include <stdint.h>
-#include "pico/types.h"
 #include "ram4416.h"
 #include "mem_family/fam_4bit_1ras_256k.h"
-#include "mem_chip.h"
 
-static mem_chip_t self;
+#define SHORT_NAME "4416"
 
-static void setup_pio(uint speed_grade, uint variant)
-{
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[speed_grade]);
+#define ROW_PINS  8
+#define COL_PINS  6
+#define ROW_MASK ((1u << ROW_PINS) -1)
+#define COL_MASK ((1u << COL_PINS) -1)
+
+static inline const mem_family_t *get_family(){
+    return fam_4bit_1ras_256k();
 }
 
-static void teardown_pio() {
-    self.family()->teardown_pio();
-};
-
-static int addr_func(int addr) {
-    return ((addr & 0x007f) | ((addr << 1) & 0x7f00));
-};
+static inline int addr_func (int addr) {
+    return (
+        (addr & ROW_MASK) |
+        (((addr >> ROW_PINS) & COL_MASK) << get_family()->addr_pins)
+    );  
+}
 
 static mem_chip_t self = {
-    .family = fam_4bit_1ras_256k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = get_family,
     .mem_size = 16384,
     .bits = 4,
-    .name = "4416 (16Kx4)",
-    .short_name = "4416",
-    .timing_family = "ram4416",
+    .name = SHORT_NAME " (16Kx4)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"4416", addr_func, NULL, NULL},
+            {SHORT_NAME, addr_func},
         },
     },
     .delay_sets = {

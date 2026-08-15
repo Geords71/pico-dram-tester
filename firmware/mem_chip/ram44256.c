@@ -1,37 +1,19 @@
-#include <stdint.h>
-#include "pico/types.h"
 #include "ram44256.h"
 #include "mem_family/fam_4bit_1ras_256k.h"
 
-#include "mem_chip.h"
-
-static mem_chip_t self;
-
-static void setup_pio(uint delay_set_idx, uint variant_idx) {
-    get_ram_config(&self);
-    self.family()->setup_pio(self.delay_sets.list[delay_set_idx]);
-}
-
-static void teardown_pio() {
-    self.family()->teardown_pio();
-}
-
+#define SHORT_NAME "44256"
 
 static mem_chip_t self = {
-    .family = fam_4bit_1ras_256k,
-    .setup_pio = setup_pio,
-    .teardown_pio = teardown_pio,
-    .ram_read = NULL,
-    .ram_write = NULL,
+    .get_family = fam_4bit_1ras_256k,
     .mem_size = 262144,
     .bits = 4,
-    .name = "44256 (256Kx4)",
-    .short_name = "44256",
-    .timing_family = "ram44256",
+    .name = SHORT_NAME " (256Kx4)",
+    .short_name = SHORT_NAME,
+    .timing_family = "ram" SHORT_NAME,
     .variants = {
         .len = 1,
         .list = {
-            {"44256", NULL, NULL, NULL},
+            {SHORT_NAME, NULL},
         },
     },
     .delay_sets = {
@@ -52,9 +34,3 @@ mem_chip_t *ram44256_chip()
 {
     return &self;
 };
-
-void ram44256_setup_pio(uint speed_grade, uint variant)
-{
-    get_ram_config(&self);
-    ram4b1r_setup_pio(self.delay_sets.list[speed_grade], variant);
-}
