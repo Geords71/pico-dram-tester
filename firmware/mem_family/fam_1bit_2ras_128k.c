@@ -89,6 +89,7 @@ static const mem_family_t self = {
     .teardown_pio = teardown_pio,
     .read = read,
     .write = write,
+    .bits = 1,
 };
 
 inline const mem_family_t *fam_1bit_2ras_128k() {

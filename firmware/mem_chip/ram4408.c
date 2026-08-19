@@ -19,26 +19,26 @@ static inline const mem_family_t *get_family(){
 // the bottom nine bits for the row. We'll shift our 14 bit number around
 // accordingly.
 
-#define ROW_PINS  8
+#define ROW_PINS  7
 #define COL_PINS  6
+#define COL_OFFSET  1
+#define HILO_OFFSET  7
 #define ROW_MASK ((1u << ROW_PINS) -1)
 #define COL_MASK ((1u << COL_PINS) -1)
 
-static inline int addr_func (int addr) {
+static inline int addr_l (int addr) {
+    // Column address starts at A1, not A0. See 4416 data sheet.
     return (
         (addr & ROW_MASK) |
-        (((addr >> ROW_PINS) & COL_MASK) << get_family()->addr_pins)
+        (((addr >> ROW_PINS) & COL_MASK) << (get_family()->addr_pins + COL_OFFSET))
     );  
 }
 
-static inline int addr_t(int addr)
+static inline int addr_h(int addr)
 {
-    return addr_func(addr) | 0x00;  
-}
-
-static inline int addr_b(int addr)
-{
-    return addr_func(addr) | 0x80;  
+    // 4408 can have A7 Permanently tied to either high or low.
+    // See Matra Alice 32 schematic example in datasheets directory.
+    return addr_l(addr) | (1u << HILO_OFFSET) | (1u << get_family()->addr_pins + HILO_OFFSET);  
 }
 
 static mem_chip_t self = {
@@ -51,8 +51,8 @@ static mem_chip_t self = {
     .variants = {
         .len = 2,
         .list = {
-            {"TMS" SHORT_NAME "T (Top)",    addr_t},
-            {"TMS" SHORT_NAME "B (Bottom)", addr_b},
+            {"TMS" SHORT_NAME "T (A7 low)",  addr_l},
+            {"TMS" SHORT_NAME "B (A7 high)", addr_h},
         },
     },
     .delay_sets = {

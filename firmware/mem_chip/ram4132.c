@@ -32,6 +32,9 @@ static inline int addr_4532_hi(int addr) {
 #define ROW_MASK_3732 ((1u << ROW_PINS_3732) -1)
 #define COL_MASK_3732 ((1u << COL_PINS_3732) -1)
 
+// One Column Address (A7) has to be fixed at logic 0
+// (low level) for MSM3732L, and at logic 1 (high level)
+// for MSM3732H.
 static inline int addr_3732_lo(int addr) {
     // A7 on column selects the good half: 0->lo and 1->hi.
     // A7 is implicitly 'lo' for the column address here.
@@ -56,8 +59,12 @@ static mem_chip_t self = {
     .variants = {
         .len = 4,
         .list = {
-            {"TMS4532xxNL3 (low)",  addr_4532_hi},
-            {"TMS4532xxNL4 (high)", addr_4532_lo},
+            // There are a lot of vague web sites on what is valid
+            // But looking at schemtic for issue 3, we can infer that TMS
+            // uses A7 RAS as it is swapped at the muxer pins
+            // when compoared to oki. And we have a data sheet for that. :-)
+            {"TMS4532xxNL3 (low)",  addr_4532_lo},
+            {"TMS4532xxNL4 (high)", addr_4532_hi},
             {"M3732L (low)",  addr_3732_lo},
             {"M3732H (high)", addr_3732_hi},
         },

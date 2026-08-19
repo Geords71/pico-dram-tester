@@ -6,6 +6,7 @@
 
 #define ROW_PINS  8
 #define COL_PINS  6
+#define COL_OFFSET  1
 #define ROW_MASK ((1u << ROW_PINS) -1)
 #define COL_MASK ((1u << COL_PINS) -1)
 
@@ -14,9 +15,10 @@ static inline const mem_family_t *get_family(){
 }
 
 static inline int addr_func (int addr) {
+    // Column address starts at A1, not A0. See 4416 data sheet.
     return (
         (addr & ROW_MASK) |
-        (((addr >> ROW_PINS) & COL_MASK) << get_family()->addr_pins)
+        (((addr >> ROW_PINS) & COL_MASK) << (get_family()->addr_pins + COL_OFFSET))
     );  
 }
 

@@ -96,6 +96,7 @@ static const mem_family_t self = {
     .read = &read,
     .write = &write,
     .addr_pins = 9,
+    .bits = 4,
 };
 
 inline const mem_family_t *fam_4bit_1ras_256k() {

@@ -59,15 +59,16 @@ static int read(int (*addr_func)(int addr), int addr)
 {
     addr = (addr_func != NULL) ? addr_func(addr) : addr;
 
-    pio_sm_put(pio, sm, 0 |                     // Fast page mode flag
-                        0 << 1 |                // Write flag
-                        (addr & 0x1ff) << 2 |    // Row address
-                        (addr >> 9) << 11|   // Column address
-                        ((0 & 1) << 20));       // Data bit
+    pio_sm_put(
+        pio, sm, 
+        (0    << 0)   |  // Fast page mode flag
+        (0    << 1)   |  // Write flag
+        (addr << 2)   |  // Full 18 bit address
+        (0    << 20)     // Data bit
+    );
 
     while (pio_sm_is_rx_fifo_empty(pio, sm)) {} // Wait for data to arrive
     uint d = pio_sm_get(pio, sm);                 // Return the data
-    //gpio_put(GPIO_LED, d);
     return d;
 }
 
@@ -91,6 +92,7 @@ static const mem_family_t self = {
     .read = read,
     .write = write,
     .addr_pins = 9,
+    .bits = 1,
 };
 
 inline const mem_family_t *fam_1bit_1ras_256k() {

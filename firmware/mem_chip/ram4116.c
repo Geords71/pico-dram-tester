@@ -9,12 +9,12 @@ static inline const mem_family_t *get_family(){
 }
 
 #define ADDR_PINS  7
-#define ROW_MASK ((1u << ADDR_PINS) -1)
+#define ADDR_MASK ((1u << ADDR_PINS) -1)
 
 static inline int addr_func (int addr) {
     return (
-        (addr & ROW_MASK) |
-        (((addr >> ADDR_PINS) & ROW_MASK) << (get_family()->addr_pins))
+        (addr & ADDR_MASK) |
+        (((addr >> ADDR_PINS) & ADDR_MASK) << (get_family()->addr_pins))
     );  
 }
 

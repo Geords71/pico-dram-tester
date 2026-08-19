@@ -14,9 +14,7 @@ static mem_chip_t self = {
     .timing_family = "ram4116",
     .variants = {
         .len = 1,
-        .list = {
-            {SHORT_NAME, NULL},
-        },
+        .list = {{SHORT_NAME, NULL},},
     },
     .delay_sets = {
         .len = 4,

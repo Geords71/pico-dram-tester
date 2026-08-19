@@ -9,25 +9,24 @@ static inline const mem_family_t *get_family(){
 }
 
 #define ADDR_PINS  7
-#define ROW_MASK ((1u << ADDR_PINS) -1)
+#define ADDR_MASK ((1u << ADDR_PINS) -1)
 
-static inline int addr_func (int addr) {
+static inline int addr_lo_cols (int addr) {
     return (
-        (addr & ROW_MASK) |
+        (addr & ADDR_MASK) |
         // Pin A0 for column select dictates if we are accessing lo or hi half.
-        // so the column address is shifted left by an extra bit to make room.
-        (((addr >> ADDR_PINS) & ROW_MASK) << (get_family()->addr_pins + 1))
+        // So the column address is shifted left by an extra bit to make room.
+        // The mask and shifts mean that the column's A0 is implictly zero
+        // The chip family used for testing will potentially have more address
+        // pins. Hence the shift logic here. As we pack row and column addrs
+        // into a single multi-byte integer.
+        (((addr >> ADDR_PINS) & ADDR_MASK) << (get_family()->addr_pins + 1))
     );  
-}
-
-static inline int addr_lo_cols(int addr) {
-    // Pin A0 for column select dictates if we are accessing low or high half.
-    return addr_func(addr) | 0x00;
 }
 
 static inline int addr_hi_cols(int addr) {
     // Pin A0 for column select dictates if we are accessing low or high half.
-    return addr_func(addr) | 0x100;
+    return addr_lo_cols(addr) | (1u << get_family()->addr_pins);
 }
 
 static mem_chip_t self = {

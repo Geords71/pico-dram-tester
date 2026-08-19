@@ -21,6 +21,7 @@ typedef struct {
     int (*read)(int (*addr_func)(int addr), int addr);
     void (*write)(int (*addr_func)(int addr), int addr, int data);
     const uint8_t addr_pins;
+    const uint8_t bits;
 } mem_family_t;
     
 extern struct pio_program *get_patched_program(
