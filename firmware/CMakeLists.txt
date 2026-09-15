@@ -73,6 +73,7 @@ target_compile_options(pmemtest PRIVATE -mno-pic-data-is-text-relative)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_1ras_256k.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_stacked_32k.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_1bit_2ras_128k.pio)
+pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_2114.pio)
 pico_generate_pio_header(pmemtest ${CMAKE_CURRENT_LIST_DIR}/mem_family/fam_4bit_1ras_256k.pio)
 
 set(PICO_SDK_PATH "${USERHOME}/.pico-sdk/sdk/${sdkVersion}")
@@ -111,6 +112,7 @@ target_sources(pmemtest PRIVATE
     mem_tester.c
     pmemtest.c
     mem_chip/ram4027.c
+    mem_chip/ram2114.c
     mem_chip/ram4108.c
     mem_chip/ram4116.c
     mem_chip/ram4132.c
@@ -125,6 +127,7 @@ target_sources(pmemtest PRIVATE
     mem_chip/ram4816.c
     mem_family/fam_1bit_1ras_256k.c
     mem_family/fam_1bit_stacked_32k.c
+    mem_family/fam_2114.c
     mem_family/fam_4bit_1ras_256k.c
     mem_family/fam_1bit_2ras_128k.c
     screen/chip_screen.c
