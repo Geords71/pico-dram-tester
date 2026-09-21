@@ -1,4 +1,64 @@
+;
+; 2114 Test Program
+;
 
+; Note: 'set PINDIRS' also sets all high order bits to 0, so we can't use it!
+
+; Pin Assignments
+; SP0  = IO4
+; SP1  = IO3
+; SP2  = A1
+; SP3  = CS
+; SP4  = WE
+; SP5  = A0
+; SP6  = A3
+; SP7  = A4
+; SP8  = A5
+; SP9  = A7
+; SP10 = A8
+; SP11 = A9
+; SP12 = A6
+; SP13 = nc
+; SP14 = IO1
+; SP15 = A2
+; SP16 = IO2
+
+; PIO version 1 since we need to mov pindirs
 .pio_version 1
 
 .program fam_2114
+
+.define CMD_ALL_OFF 0b11
+.define CMD_CS_ON 0b10
+.define CMD_ALL_ON 0b00
+
+; Note: We need to update the address lines and the RAS# at the same time.
+begin:
+    pull block             ; Wait for new data to arrive.
+    out x, 1               ; Get the first bit which tells us if we are setting the pindir mask.
+    jmp !x read_write_mode ; Skip write if not in write mode.
+
+pindir_mode:
+    out y, 17              ; Read the data pin mask into y
+    jmp begin
+
+read_write_mode:
+    out x, 1               ; Get next bit which tells us if we are in write mode.
+    out pins, 17           ; Load address, values for data outputs, and CMD_ALL_OFF.
+    jmp !x read_branch     ; Skip write if not in write mode
+
+write_branch:
+    mov pindirs, ~NULL     ; All outputs
+    set pins, CMD_ALL_ON   ; Lower CS and WE
+    jmp rejoin
+
+read_branch:
+    mov pindirs, ~y        ; preserve other bits as 1 (output)
+    set pins, CMD_CS_ON    ; Lower CS only.
+    jmp rejoin
+
+rejoin:
+    set pins, CMD_ALL_OFF  ; Raise CS.
+    in pins, 17            ; Copy all pins to the ISR
+    push noblock           ; Push the ISR.
+    jmp begin

@@ -45,7 +45,7 @@ static void setup_pio(const uint8_t *delay_set)
     // Shift right, Autopull off, 30 bits (1 + 1 + 14 + 14) at a time
     sm_config_set_out_shift(&c, true, false, 30);
 
-    // Shift left, Autopull on, 4 bits
+    // Shift left, Autopull off, 4 bits
     sm_config_set_in_shift(&c, false, false, 4);
 
     hw_set_bits(&pio->input_sync_bypass, 0xf << pin); //to bypass synchronization on an input

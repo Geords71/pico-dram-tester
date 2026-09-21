@@ -30,6 +30,10 @@ static const uint8_t data_map[DATA_MAP_LEN] = {
      0,
 };
 
+// 2114 is a bit scattered compared to the dram pin sequences so we'll use
+// a mask. 1s denote input to pico.
+#define PIN_DIR_MASK 0b10100000000000011
+
 static void setup_pio(const uint8_t *delay_set) {
 
     uint pin = 5;
@@ -40,7 +44,6 @@ static void setup_pio(const uint8_t *delay_set) {
         &pio, &sm, &offset, pin, 17, true
     );
 
-
     // Set up 17 total pins
     for (uint count = 0; count < 17; count++) {
         pio_gpio_init(pio, pin + count);
@@ -48,31 +51,33 @@ static void setup_pio(const uint8_t *delay_set) {
         gpio_set_drive_strength(pin + count, GPIO_DRIVE_STRENGTH_4MA);
     }
 
-    // 2114 is a bit scattered compared to the dram pin sequences so we'll use
-    // a mask.
-    uint32_t in_mask = 0;
-    uint32_t out_mask = 0;
-    pio_sm_set_pindirs_with_mask(pio, sm, false, in_mask);
-    pio_sm_set_pindirs_with_mask(pio, sm, false, out_mask);
+    // True is output - with respect to pico. So the data pins are set up for
+    // read intitially. The pio asm code wll flip data pin directions as
+    // required for read and write operations.
+    pio_sm_set_pindirs_with_mask(pio, sm, true, ~PIN_DIR_MASK);
+    pio_sm_set_pindirs_with_mask(pio, sm, false, PIN_DIR_MASK);
 
     pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
 
     pio_sm_config c = fam_2114_program_get_default_config(offset);
 
-    // A0, A1, A2, A3, A4, A5, A6, A7, nc, D, WR, RAS, CAS, nc, nc, nc, IN
-    sm_config_set_out_pins(&c, pin, 10);
-    sm_config_set_set_pins(&c, pin + 10, 3); // Max is 5.
-    sm_config_set_in_pins(&c, pin + 16);
+    // IO4, IO3, A1, CS, WE, A0, A3, A4, A5, A7, A8, A9, A6, nc, IO1, A2, IO2
+    sm_config_set_out_pins(&c, pin, 17);
+    sm_config_set_set_pins(&c, pin + 3, 2); // Max is 5.
+    sm_config_set_in_pins(&c, pin);
 
-    // Shift right, Autopull off, 20 bits (1 + 1 + 8 + 10) at a time
-    sm_config_set_out_shift(&c, true, false, 20);
+    // Shift right, Autopull off, and last arg only used for autopull so can be zero
+    sm_config_set_out_shift(&c, true, false, 0);
 
-    // Shift left, Autopull on, 1 bit
-    sm_config_set_in_shift(&c, false, false, 1);
+    // Shift right, Autopull off, so the bit threshold doesn't matter
+    sm_config_set_in_shift(&c, true, false, 0);
 
     //hw_set_bits(&pio->input_sync_bypass, 1u << (pin + 16)); //to bypass synchronization on an input
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
+
+    // Send the data bit mask to the state machine
+    pio_sm_put(pio, sm, (PIN_DIR_MASK << 1) | 1);
 }
 
 static void teardown_pio() {
@@ -115,24 +120,16 @@ static int read(int (*addr_func)(int addr), int addr)  {
 
     // All non-addr bits will be zeroed.
     pio_sm_put(pio, sm, fifo_word);
-
     while (pio_sm_is_rx_fifo_empty(pio, sm)) {} // Wait for data to arrive
-
     int data = fifo_to_data(pio_sm_get(pio, sm));               // Return the data
-
     return data;
 }
 
 static void write(int (*addr_func)(int addr), int addr, int data)  {
-
     uint32_t fifo_word = addr_to_fifo(addr) | data_to_fifo(data);
-
     pio_sm_put(pio, sm, fifo_word);
-
     while (pio_sm_is_rx_fifo_empty(pio, sm)) {} // Wait for data to arrive
-
     uint d = pio_sm_get(pio, sm);               // Return the data
-
 }
 
 static const mem_family_t self = {
