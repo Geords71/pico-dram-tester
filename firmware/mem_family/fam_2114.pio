@@ -1,6 +1,4 @@
-;
 ; 2114 Test Program
-;
 
 ; Note: 'set PINDIRS' also sets all high order bits to 0, so we can't use it!
 
@@ -32,33 +30,39 @@
 .define CMD_CS_ON 0b10
 .define CMD_ALL_ON 0b00
 
-; Note: We need to update the address lines and the RAS# at the same time.
+pull block                 ; Wait for data pin dir mask.
+out y, 17                  ; Read the data pin dir mask into y.
+
+; make is a bit easier to reason timings if we start begin at point where
+; the address is reset. So jump to actual start of loop!
+jmp enter                  
+
 begin:
-    pull block             ; Wait for new data to arrive.
-    out x, 1               ; Get the first bit which tells us if we are setting the pindir mask.
-    jmp !x read_write_mode ; Skip write if not in write mode.
-
-pindir_mode:
-    out y, 17              ; Read the data pin mask into y
-    jmp begin
-
-read_write_mode:
-    out x, 1               ; Get next bit which tells us if we are in write mode.
-    out pins, 17           ; Load address, values for data outputs, and CMD_ALL_OFF.
+    out pins, 17           ; Load address, data, and CMD_ALL_OFF. Start of tRC, tWC, tDW.
     jmp !x read_branch     ; Skip write if not in write mode
 
 write_branch:
-    mov pindirs, ~NULL     ; All outputs
-    set pins, CMD_ALL_ON   ; Lower CS and WE
+    mov pindirs, ~NULL     ; All outputs.
+    set pins, CMD_ALL_ON   ; Lower CS and WE. Start of tW.
     jmp rejoin
 
 read_branch:
-    mov pindirs, ~y        ; preserve other bits as 1 (output)
-    set pins, CMD_CS_ON    ; Lower CS only.
+    mov pindirs, ~y        ; Set data pins as input (0).
+    set pins, CMD_CS_ON    ; Lower CS only. Start of tCO.
     jmp rejoin
 
 rejoin:
-    set pins, CMD_ALL_OFF  ; Raise CS.
-    in pins, 17            ; Copy all pins to the ISR
+    nop [1]                ; 
+    nop [2]                ; 
+    in y, 17            ; Copy all pins to the ISR. tCO must be met.
     push noblock           ; Push the ISR.
-    jmp begin
+    nop [3]
+    set pins, CMD_ALL_OFF  ; Raise CS and WE. tDW, tW must be met.
+
+enter:
+    pull block          ; Get the next command.
+    out x, 1            ; Get first bit which tells us if we are in write mode.
+    nop [4]
+    nop [5]
+    nop [6]
+    jmp begin           ; tRC, tWC, tOTD must be met.

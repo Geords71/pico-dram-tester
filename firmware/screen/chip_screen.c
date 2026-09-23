@@ -10,6 +10,7 @@
 #include "speed_screen.h"
 #include "test_screen.h"
 
+#include "mem_chip/ram2114.h"
 #include "mem_chip/ram4027.h"
 #include "mem_chip/ram4108.h"
 #include "mem_chip/ram4116.h"
@@ -25,6 +26,7 @@
 #include "mem_chip/ram41128.h"
 
 static mem_chip_t *(*chip_list[NUM_CHIPS])() = {
+    ram2114_chip,
     ram4027_chip,
     ram4108_chip,
     ram4116_chip,

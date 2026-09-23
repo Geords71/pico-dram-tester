@@ -5,7 +5,7 @@
 #include "hardware/pio.h"
 #include "mem_family.h"
 
-#define NUM_CHIPS 13
+#define NUM_CHIPS 14
 #define MEMCHIP_MAX_VARIANTS 8
 
 typedef struct mem_chip_variant_t {
