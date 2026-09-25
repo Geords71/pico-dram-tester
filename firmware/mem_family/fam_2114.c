@@ -60,6 +60,7 @@ static const uint8_t data_map[DATA_MAP_LEN] = {
 };
 
 // 1s denote input to Pico2. They must match the pin locations in the data map.
+// Map must include all gpio pins, pin offset
 #define PIN_DIR_MASK 0b10100000000000011
 
 static void setup_pio(const uint8_t *delay_set) {
@@ -79,30 +80,25 @@ static void setup_pio(const uint8_t *delay_set) {
         gpio_set_drive_strength(pin + count, GPIO_DRIVE_STRENGTH_4MA);
     }
 
-    // True is output - with respect to pico. So the data pins are set up for
-    // read intitially. The pio asm code wll flip data pin directions as
-    // required for read and write operations.
-    pio_sm_set_pindirs_with_mask(pio, sm, true, ~PIN_DIR_MASK);
-    pio_sm_set_pindirs_with_mask(pio, sm, false, PIN_DIR_MASK);
-
     pio_sm_set_clkdiv(pio, sm, 1); // should just be the default.
 
     pio_sm_config c = fam_2114_program_get_default_config(offset);
 
-    // IO4, IO3, A1, CS, WE, A0, A3, A4, A5, A7, A8, A9, A6, nc, IO1, A2, IO2
+    // SP0, SP1, SP2, SP3, SP4, SP5, SP6, SP7, SP8, SP9, SP10, SP11, SP12, SP13, SP14, SP15, SP16
+    // IO4, IO3,  A1,  CS,  WE,  A0,  A3,  A4,  A5,  A7,   A8,   A9,   A6,   nc,  IO1,   A2,  IO2
     sm_config_set_out_pins(&c, pin, 17);
     sm_config_set_set_pins(&c, pin + 3, 2); // Max is 5.
     sm_config_set_in_pins(&c, pin);
 
-    // Shift right, Autopull off, and last arg is only used for autopull, so it
+    // Shift right true, Autopull off, and last arg is only used for autopull, so it
     // can be zero.
-    sm_config_set_out_shift(&c, false, false, 0);
+    sm_config_set_out_shift(&c, true, false, 0);
 
-    // Shift right, Autopull off, so the bit threshold doesn't matter
-    sm_config_set_in_shift(&c, false, false, 0);
+    // Shift left, Autopull off, so the bit threshold doesn't matter
+    sm_config_set_in_shift(&c, true, false, 0);
 
     // to bypass synchronization on an input
-    // hw_set_bits(&pio->input_sync_bypass, 1u << (pin + 16)); 
+    hw_set_bits(&pio->input_sync_bypass, PIN_DIR_MASK << pin); 
     pio_sm_init(pio, sm, offset, &c);
     pio_sm_set_enabled(pio, sm, true);
 
@@ -171,20 +167,23 @@ static inline uint32_t pins_to_data(uint32_t fifo_word) {
 
 static int read(int (*addr_func)(int addr), int addr)  {
     uint32_t fifo_word = read_fifo(addr);
-    ULOG_INFO("Read Cmd : %032b", fifo_word);
+    // ULOG_INFO("Read Cmd : %032b", fifo_word);
     pio_sm_put(pio, sm, fifo_word);
 
     // Wait for data to arrive
     while (pio_sm_is_rx_fifo_empty(pio, sm)) {}
 
-    int data = pins_to_data(pio_sm_get(pio, sm));
-    ULOG_INFO("Read Val : %032b", data);
+    int retval = pio_sm_get(pio, sm);
+    // ULOG_INFO("Ret Val  : %032b", retval);
+    int data = pins_to_data(retval);
+    // ULOG_INFO("Read Val : %04b", data);
     return data;
 }
 
 static void write(int (*addr_func)(int addr), int addr, int data)  {
+    // ULOG_INFO("Write Data: %04b", data);
     uint32_t fifo_word = write_fifo(addr, data);
-    ULOG_INFO("Write Cmd: %032b", fifo_word);
+    // ULOG_INFO("Write Cmd: %032b", fifo_word);
     pio_sm_put(pio, sm, fifo_word);
 
     // Wait for data to arrive

@@ -21,7 +21,7 @@ static mem_chip_t self = {
         .wid = FAM_2114_DELAY_SET_COLS,
         .names = {"250ns",},
         .list = {
-            {0, 19, 0, 5,  24,  0,  0}, // 250ns
+            {0, 31, 31, 5,  12,  12,  12}, // 250ns
         },
     },
 };

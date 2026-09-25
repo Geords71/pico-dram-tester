@@ -30,8 +30,8 @@
 .define CMD_CS_ON 0b10
 .define CMD_ALL_ON 0b00
 
-pull block                 ; Wait for data pin dir mask.
-out y, 17                  ; Read the data pin dir mask into y.
+pull block             ; Wait for data pin dir mask.
+out y, 32              ; Read the data pin dir mask into y.
 
 ; make is a bit easier to reason timings if we start begin at point where
 ; the address is reset. So jump to actual start of loop!
@@ -42,19 +42,20 @@ begin:
     jmp !x read_branch     ; Skip write if not in write mode
 
 write_branch:
-    mov pindirs, ~NULL     ; All outputs.
+    mov pindirs, ~NULL     ; Default.
     set pins, CMD_ALL_ON   ; Lower CS and WE. Start of tW.
     jmp rejoin
 
 read_branch:
-    mov pindirs, ~y        ; Set data pins as input (0).
+    mov pindirs, ~y        ; data inputs
     set pins, CMD_CS_ON    ; Lower CS only. Start of tCO.
     jmp rejoin
 
 rejoin:
     nop [1]                ; 
     nop [2]                ; 
-    in y, 17            ; Copy all pins to the ISR. tCO must be met.
+    in pins, 17            ; Copy all pins to the ISR. tCO must be met.
+    in NULL, 15            ; Shift data right so base is LSB
     push noblock           ; Push the ISR.
     nop [3]
     set pins, CMD_ALL_OFF  ; Raise CS and WE. tDW, tW must be met.
