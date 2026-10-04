@@ -345,6 +345,7 @@ static void __no_inline_not_in_flash_func(busy_wait_ram)(uint32_t ms) {
 // Entry point for second core. This is just a generic
 // function dispatcher lifted from the Raspberry Pi example code.
 static void __no_inline_not_in_flash_func(core1_entry)() {
+    // uint32_t status = save_and_disable_interrupts(); 
     while (true) {
 
         if (self.shared.please_run)
@@ -377,7 +378,7 @@ static void __no_inline_not_in_flash_func(core1_entry)() {
                 continue;
             } ;
             
-            if (return_code != 0 && self.shared.please_seek && self.speed_idx < self.chip->delay_sets.len - 1) {
+            if (return_code != 0 && self.shared.please_bin && self.speed_idx < self.chip->delay_sets.len - 1) {
                 ULOG_INFO("Re-Running all memory tests at a slower speed...");
                 self.speed_idx++;
                 continue;

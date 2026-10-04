@@ -132,6 +132,7 @@ target_sources(pmemtest PRIVATE
     mem_family/fam_1bit_2ras_128k.c
     screen/chip_screen.c
     screen/main_screen.c
+    screen/power_prompt_screen.c
     screen/speed_screen.c
     screen/test_screen.c
     screen/variant_screen.c

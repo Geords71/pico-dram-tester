@@ -68,13 +68,14 @@ static void init_listbox() {
     }
 }
 
-static void enter(menu_t *parent)
+static menu_t * enter(menu_t *parent)
 {
     if (parent != NULL) {
         self.parent = parent;
         init_listbox();
     }
     show();
+    return &self;
 }
 
 static menu_t * do_encoder_pushed()
@@ -85,7 +86,7 @@ static menu_t * do_encoder_pushed()
 
     next_screen = speed_screen;
 
-    if (mem_tester->shared.please_seek) next_screen = test_screen;
+    if (mem_tester->shared.please_bin) next_screen = test_screen;
 
     if (mem_tester->chip->variants.len > 1) {
         next_screen = variant_screen;
@@ -96,13 +97,11 @@ static menu_t * do_encoder_pushed()
         mem_tester->variant_idx = 0;
     };
 
-    next_screen->enter(&self);
-    return next_screen;
+    return next_screen->enter(&self);
 }
 
 static menu_t * do_back_pushed() {
-    self.parent->enter(NULL);
-    return self.parent;
+    return self.parent->enter(NULL);
 }
 
 static menu_t * do_encoder_clockwise() {

@@ -16,7 +16,7 @@ typedef struct {
     _Atomic uint32_t please_run;
     _Atomic uint32_t please_stop;
     _Atomic uint32_t please_soak;
-    _Atomic uint32_t please_seek;
+    _Atomic uint32_t please_bin;
     void (* init)();
     void (* sleep)();
     void (* reset)();

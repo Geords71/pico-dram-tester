@@ -8,14 +8,14 @@
 enum menu_items_t {
     STANDARD_TEST,
     SOAK_TEST,
-    SEEK_SOAK_TEST,
+    BIN_SOAK_TEST,
     NUM_MENU_ITEMS,
 };
 
 static char *listbox_items[NUM_MENU_ITEMS] = {
     [STANDARD_TEST] = "Standard Test",
     [SOAK_TEST] = "Soak Test",
-    [SEEK_SOAK_TEST] = "Seek & Soak Test",
+    [BIN_SOAK_TEST] = "Bin & Soak Test",
 };
 
 static gui_listbox_t listbox = {
@@ -36,12 +36,13 @@ static void show() {
     paint_gui_listbox(&listbox, LIST_ACTION_NONE);
 }
 
-static void enter(menu_t *parent)
+static menu_t * enter(menu_t *parent)
 {
     if (parent != NULL) {
         self.parent = parent;
     }
     show();
+    return &self;
 }
 
 static menu_t * do_encoder_pushed()
@@ -49,25 +50,23 @@ static menu_t * do_encoder_pushed()
     uint8_t code = listbox.sel_line;
     menu_t *next_screen = chip_screen;
 
-    if (code == SOAK_TEST || code == SEEK_SOAK_TEST) {
+    if (code == SOAK_TEST || code == BIN_SOAK_TEST) {
         mem_tester->shared.please_soak = true;
     } else {
         mem_tester->shared.please_soak = false;
     };
 
-    if (code == SEEK_SOAK_TEST) {
-        mem_tester->shared.please_seek = true;
+    if (code == BIN_SOAK_TEST) {
+        mem_tester->shared.please_bin = true;
     } else {
-        mem_tester->shared.please_seek = false;
+        mem_tester->shared.please_bin = false;
     };
 
-    next_screen->enter(&self);
-    return next_screen;
+    return next_screen->enter(&self);
 }
 
 static menu_t * do_back_pushed() {
-    self.parent->enter(NULL);
-    return self.parent;
+    return self.parent->enter(NULL);
 }
 
 static menu_t * do_encoder_clockwise() {

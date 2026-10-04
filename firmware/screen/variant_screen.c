@@ -52,19 +52,19 @@ static void init_listbox()
     variant_listbox.sel_line = 0;
 }
 
-static void enter(menu_t *parent)
+static menu_t * enter(menu_t *parent)
 {
     if (parent != NULL) {
         init_listbox();
         self.parent = parent;
     }
     show();
+    return &self;
 }
 
 static menu_t * do_back_pushed()
 {
-    self.parent->enter(NULL);
-    return self.parent;
+    return self.parent->enter(NULL);
 }
 
 static menu_t * do_encoder_pushed()
@@ -72,13 +72,12 @@ static menu_t * do_encoder_pushed()
     mem_tester->variant_idx = variant_listbox.sel_line;
 
     menu_t *next_screen;
-    if (mem_tester->shared.please_seek) {
+    if (mem_tester->shared.please_bin) {
         next_screen = test_screen;
     } else {
         next_screen = speed_screen;
     };
-    next_screen->enter(&self);
-    return next_screen;
+    return next_screen->enter(&self);
 }
 
 static menu_t * do_encoder_clockwise() {

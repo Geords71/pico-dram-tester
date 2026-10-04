@@ -16,8 +16,7 @@ void menu_init()
     ULOG_INFO("Initializing GUI...");
     gui_init();
 
-    cur_screen = main_screen;
-    main_screen->enter(main_screen);
+    cur_screen = main_screen->enter(main_screen);
 }
 
 

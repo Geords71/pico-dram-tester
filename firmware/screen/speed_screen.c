@@ -6,7 +6,7 @@
 #include "mem_tester.h"
 #include "logging/logging.h"
 #include "speed_screen.h"
-#include "test_screen.h"
+#include "power_prompt_screen.h"
 
 // Singleton self pointer
 static menu_t self;
@@ -23,7 +23,6 @@ static gui_listbox_t speed_listbox = {
     .items = NULL,
 };
 
-static bool prompt_active = false;
 static const mem_chip_t *cur_chip = NULL;
 
 static void show() {
@@ -46,45 +45,27 @@ static void init_listbox()
     speed_listbox.start_line = 0;
 }
 
-static void enter(menu_t *parent)
+static menu_t * enter(menu_t *parent)
 {
     if (parent != NULL) {
         self.parent = parent;
         init_listbox();
     }
     show();
+    return &self;
 }
 
 static menu_t * do_back_pushed()
 {
-    if (prompt_active) {
-        prompt_active = false;
-        show();
-        return &self;
-    }
-    self.parent->enter(NULL);
-    return self.parent;
+    return self.parent->enter(NULL);
 }
 
 static menu_t * do_encoder_pushed()
 {
-    if (prompt_active) {
-        prompt_active = false;
+    mem_tester->speed_idx = speed_listbox.sel_line;
 
-        mem_tester->speed_idx = speed_listbox.sel_line;
-
-        menu_t *next_screen = test_screen;
-        next_screen->enter(&self);
-        return next_screen;
-    }
-
-    prompt_active = true;
-    paint_gui_messagebox(
-        "Place Chip in Socket",
-        "Turn on external supply afterwards, if used.",
-        &chip_icon
-    );
-    return &self;
+    menu_t *next_screen = power_prompt_screen;
+    return next_screen->enter(&self);
 }
 
 static menu_t * do_encoder_clockwise() {

@@ -25,8 +25,7 @@ static menu_t * do_back_pushed() {
         return &self;
     };
 
-    self.parent->enter(NULL);
-    return self.parent;
+    return self.parent->enter(NULL);
 }
 
 static menu_t * do_return_self() {
@@ -38,7 +37,7 @@ static uint32_t last_test = 0;
 static uint32_t last_speed_idx = -1;
 
 static void start_tests() {
-    if (mem_tester->shared.please_seek) mem_tester->speed_idx = 0;
+    if (mem_tester->shared.please_bin) mem_tester->speed_idx = 0;
     const mem_chip_t *chip = mem_tester->chip;
 
     mem_tester->shared.reset();
@@ -67,9 +66,10 @@ static menu_t * do_encoder_pushed() {
     return &self;
 }
 
-static void enter (menu_t *parent) {
+static menu_t * enter (menu_t *parent) {
     self.parent = parent;
     start_tests();
+    return &self;
 }
 
 static inline void refresh_status (uint8_t cur_test) {

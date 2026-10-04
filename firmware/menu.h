@@ -5,7 +5,7 @@
 #include "gui.h"
 
 typedef struct menu_t {
-    void (*enter)(struct menu_t *parent);
+    struct menu_t *(*enter)(struct menu_t *parent);
     struct menu_t *(*do_encoder_pushed)();
     struct menu_t *(*do_back_pushed)();
     struct menu_t *(*do_encoder_clockwise)();

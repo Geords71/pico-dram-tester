@@ -6,7 +6,7 @@
 #include "hardware/pio.h"
 
 #define MEMCHIP_MAX_DELAY_SET_ROWS 8
-#define MEMCHIP_MAX_DELAY_SET_COLS 8
+#define MEMCHIP_MAX_DELAY_SET_COLS 11
 
 typedef struct {
     uint8_t len;
