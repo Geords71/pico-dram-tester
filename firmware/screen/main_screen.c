@@ -15,7 +15,7 @@ enum menu_items_t {
 static char *listbox_items[NUM_MENU_ITEMS] = {
     [STANDARD_TEST] = "Standard Test",
     [SOAK_TEST] = "Soak Test",
-    [BIN_SOAK_TEST] = "Bin & Soak Test",
+    [BIN_SOAK_TEST] = "Rate & Soak Test",
 };
 
 static gui_listbox_t listbox = {

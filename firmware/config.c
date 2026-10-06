@@ -67,12 +67,16 @@ static config_t self = {
     .led_on = true,
     .enc_states_per_click = 2,
     .tests_pseudo_values = 32,
+    .show_socket_prompt = true,
+    .show_power_prompt = true,
 };
 
 static const config_field_t config_schema[] = {
     {"led_on",               offsetof(config_t, led_on),               parse_bool},
     {"enc_states_per_click", offsetof(config_t, enc_states_per_click), parse_int32},
     {"tests_psuedo_values",  offsetof(config_t, tests_pseudo_values),  parse_int32},
+    {"show_socket_prompt",   offsetof(config_t, show_socket_prompt),   parse_bool},
+    {"show_power_prompt",    offsetof(config_t, show_power_prompt),    parse_bool},
 };
 
 static void parse_config_line(const char* key, const char* value) {

@@ -4,6 +4,7 @@
 #include "pico/types.h"
 #include "hardware/pio.h"
 #include "mem_family.h"
+#include "socket.h"
 
 #define NUM_CHIPS 14
 #define MEMCHIP_MAX_VARIANTS 8
@@ -28,6 +29,7 @@ typedef struct {
     const char *short_name;
     const char *timing_family;
     delay_sets_t delay_sets;
+    const socket_t *(*get_socket)();
 } mem_chip_t;
 
 extern void mem_chip_load_config(mem_chip_t *chip);

@@ -1,24 +1,26 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "config.h"
 #include "gui.h"
 #include "mem_chip.h"
 #include "mem_tester.h"
 #include "logging/logging.h"
+#include "socket_prompt_screen.h"
 #include "power_prompt_screen.h"
-#include "test_screen.h"
 
 // Singleton self pointer
 static menu_t self;
 
 static bool prompt_active = false;
-static const mem_chip_t *cur_chip = NULL;
 
 static void show() {
+    char msg[64];
+    sprintf(msg, "Place chip in %s socket", mem_tester->chip->get_socket()->name);
     paint_gui_messagebox(
-        "External Power?",
-        "Turn on external power supply (if used).",
+        "Insert Chip",
+        msg,
         &chip_icon
     );
 }
@@ -30,7 +32,7 @@ static menu_t * do_back_pushed()
 
 static menu_t * enter(menu_t *parent)
 {
-    if (!config(false)->show_power_prompt) return test_screen->enter(parent);
+    if (!config(false)->show_socket_prompt) return power_prompt_screen->enter(parent);
 
     if (parent != NULL) {
         self.parent = parent;
@@ -43,7 +45,7 @@ static menu_t * enter(menu_t *parent)
 
 static menu_t * do_encoder_pushed()
 {
-    menu_t *next_screen = test_screen;
+    menu_t *next_screen = power_prompt_screen;
     return next_screen->enter(&self);
 }
 
@@ -61,4 +63,4 @@ static menu_t self = {
     .parent = NULL,
 };
 
-menu_t * power_prompt_screen = &self;
+menu_t * socket_prompt_screen = &self;

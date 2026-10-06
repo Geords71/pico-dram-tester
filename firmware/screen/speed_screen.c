@@ -6,7 +6,7 @@
 #include "mem_tester.h"
 #include "logging/logging.h"
 #include "speed_screen.h"
-#include "power_prompt_screen.h"
+#include "socket_prompt_screen.h"
 
 // Singleton self pointer
 static menu_t self;
@@ -64,7 +64,7 @@ static menu_t * do_encoder_pushed()
 {
     mem_tester->speed_idx = speed_listbox.sel_line;
 
-    menu_t *next_screen = power_prompt_screen;
+    menu_t *next_screen = socket_prompt_screen;
     return next_screen->enter(&self);
 }
 

@@ -8,7 +8,7 @@
 #include "chip_screen.h"
 #include "variant_screen.h"
 #include "speed_screen.h"
-#include "test_screen.h"
+#include "socket_prompt_screen.h"
 
 #include "mem_chip/ram2114.h"
 #include "mem_chip/ram4027.h"
@@ -86,7 +86,7 @@ static menu_t * do_encoder_pushed()
 
     next_screen = speed_screen;
 
-    if (mem_tester->shared.please_bin) next_screen = test_screen;
+    if (mem_tester->shared.please_bin) next_screen = socket_prompt_screen;
 
     if (mem_tester->chip->variants.len > 1) {
         next_screen = variant_screen;

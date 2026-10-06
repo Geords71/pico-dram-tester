@@ -133,6 +133,7 @@ target_sources(pmemtest PRIVATE
     screen/chip_screen.c
     screen/main_screen.c
     screen/power_prompt_screen.c
+    screen/socket_prompt_screen.c
     screen/speed_screen.c
     screen/test_screen.c
     screen/variant_screen.c
@@ -141,6 +142,7 @@ target_sources(pmemtest PRIVATE
 	shared_storage/tusb_to_fat.c
     shared_storage/shared_storage.c
 	shared_storage/tusb_descriptors.c
+    socket.c
     xoroshiro64starstar.c
 )
 

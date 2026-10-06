@@ -56,6 +56,7 @@ static mem_chip_t self = {
     .name = SHORT_NAME " (32Kx1 use 4164skt)",
     .short_name = SHORT_NAME,
     .timing_family = "ram" SHORT_NAME,
+    .get_socket = socket_4164,
     .variants = {
         .len = 4,
         .list = {

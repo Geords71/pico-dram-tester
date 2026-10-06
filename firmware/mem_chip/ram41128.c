@@ -18,6 +18,7 @@ static mem_chip_t self = {
             {SHORT_NAME, NULL},
         },
     },
+    .get_socket = socket_4164,
     .delay_sets = {
         .len = 4,
         .wid = FAM_1BIT_2RAS_128K_DELAY_SET_COLS,

@@ -32,7 +32,8 @@ static mem_chip_t self = {
             {SHORT_NAME, addr_func},
         },
     },
-    .delay_sets ={
+    .get_socket = socket_4164,
+    .delay_sets = {
         .len = 3,
         .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,
         .names = {"100ns", "120ns", "150ns"},

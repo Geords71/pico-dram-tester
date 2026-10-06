@@ -10,6 +10,7 @@ static mem_chip_t self = {
     .name = SHORT_NAME " (4416skt inverted)",
     .short_name = SHORT_NAME,
     .timing_family = "ram" SHORT_NAME,
+    .get_socket = socket_4416,
     .variants = {
         .len = 1,
         .list = {
