@@ -161,9 +161,11 @@ uint32_t __no_inline_not_in_flash_func(marchb_test)()
 #define ARTISANAL_NUMBER 42
 static uint64_t random_seeds[MAX_PSEUDO_VALUES];
 static uint32_t pseudo_values;
+static int psrand_bitcount;
 
 void __no_inline_not_in_flash_func(psrand_init_seeds)()
 {
+    psrand_bitcount = 0;
     config_t *cfg = config(false);
     pseudo_values = cfg->tests_pseudo_values;
     pseudo_values = (pseudo_values < MAX_PSEUDO_VALUES) ? pseudo_values : MAX_PSEUDO_VALUES;
@@ -178,18 +180,17 @@ void __no_inline_not_in_flash_func(psrand_init_seeds)()
 
 uint32_t __no_inline_not_in_flash_func(psrand_next_bits)()
 {
-    static int bitcount = 0;
     static uint32_t cur_rand;
     uint32_t out;
 
-    if (bitcount < self.chip->bits) {
+    if (psrand_bitcount < self.chip->bits) {
         cur_rand = psrand_next();
-        bitcount = 32;
+        psrand_bitcount = 32;
     }
 
     out = cur_rand & ((1 << (self.chip->bits)) - 1);
     cur_rand = cur_rand >> self.chip->bits;
-    bitcount -= self.chip->bits;
+    psrand_bitcount -= self.chip->bits;
     return out;
 }
 

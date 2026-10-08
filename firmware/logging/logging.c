@@ -4,8 +4,11 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "tusb.h"
+#include "config.h"
 #include "logging.h"
 #include "ulog.h"
+
+int x = ULOG_WARNING_LEVEL;
 
 char* get_timestamp()
 {
@@ -32,11 +35,14 @@ static char log_buffer[LOG_BUFFER_SIZE][LOG_ENTRY_SIZE];
 static _Atomic uint32_t head = 0;
 static _Atomic uint32_t tail = 0;
 
-int grace_period = 10;
+static int grace_period = 10;
+static config_t *cfg;
 
 void console_logger(ulog_level_t severity, char *msg) {
 
     // Queue into ring buffer
+    //if (severity < ULOG_WARNING_LEVEL) return; 
+
     snprintf(log_buffer[head], LOG_ENTRY_SIZE,
              "%s [%s]: %s\n",
              get_timestamp(),
@@ -63,16 +69,20 @@ void flush_logging()
     }
 
     if (grace_period == 0) {
-        while (tail != head) {
-            printf("%s", log_buffer[tail]);
-            tail = (tail + 1) % LOG_BUFFER_SIZE;
+        // Don't keep chasing tail or we may never finish. And this will make
+        // the main thread unresponsive.
+        for (uint8_t i=0; i<LOG_BUFFER_SIZE/8; i++) {
+            if(tail != head) {
+                printf("%s", log_buffer[tail]);
+                tail = (tail + 1) % LOG_BUFFER_SIZE;
+            }
         }
-
     }
 }
 
 void init_logging()
 {
+    cfg = config(false);
     ULOG_INIT();
     ULOG_SUBSCRIBE(console_logger, ULOG_INFO_LEVEL);
 }

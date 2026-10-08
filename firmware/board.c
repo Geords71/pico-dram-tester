@@ -81,6 +81,7 @@ typedef struct {
 static pin_debounce_t action_btn = {GPIO_QUAD_BTN, 0};
 static pin_debounce_t back_btn = {GPIO_BACK_BTN, 0};
 
+static uint8_t pins_pressed[28];
 
 // Returns true only *once* when a button is pushed. No key repeat.
 bool board_button_pushed(pin_debounce_t *pin_b)

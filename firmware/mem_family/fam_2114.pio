@@ -36,46 +36,46 @@ out y, 32              ; Read the data pin dir mask into y.
 ; Timing slots:
 ;  [1] = tW delay 1
 ;  [2] = tW delay 2
-;  [3] = WRITE cycle recovery 1
-;  [4] = WRITE cycle recovery 2
-;  [5] = tCO delay 1
-;  [6] = tCO delay 2
-;  [7] = READ cycle recovery 1
-;  [8] = READ cycle recovery 2
-;  [9] = READ cycle recovery 3
-; [10] = READ cycle recovery 4
+;  [3] = tWC delay 1
+;  [4] = tWC delay 2
+;  [5] = tA - tCO delay 1
+;  [6] = tA - tCO delay 2
+;  [7] = tA - tCO delay 3
+;  [8] = tCO delay 1
+;  [9] = tCO delay 2
+; [10] = tCO delay 3
 
 ; Note we do not currently test tA read times. Only tCO.
 ; But for some chips - such as CMOS - that is the same time span!
 begin:
-    pull block             ; Get the next command. Let's start tRC/tWC loop here.
-    out x, 1               ; Get first bit - which tells us if we are in write mode.
-    out pins, 17           ; Load address, data, and CMD_ALL_OFF. Start of tDW.
+    pull block             ; Get the next command. Start tWC and tRC.
+    out x, 1               ; Get write mode bit.
+    out pins, 17           ; Load address, data, and CMD_ALL_OFF. Start of tRC, tA, tWC, tW. 
     jmp !x read_branch     ; Skip write if not in write mode
 
 write_branch:
-    mov pindirs, ~NULL     ; All pins are outputs to ram.
+    mov pindirs, ~NULL     ; All pins act as outputs to ram.
     set pins, CMD_ALL_ON   ; Lower CS and WE. Start of tW.
-    nop [1]                ; tW delay.
-    nop [2]                ; tW delay.
+    nop [1]                ; tW delay 1.
+    nop [2]                ; tW delay 2.
     in NULL, 32            ; Need to let C code know we're finihed!
     push noblock           ; Send ISR to input FIFO.
-    set pins, CMD_ALL_OFF  ; End of write pulse. tW, tDW must be met. Start of tDH.
+    set pins, CMD_ALL_OFF  ; End of write pulse. tW, tDW must be met.
     nop [3]                ; Write cycle recovery time.
     nop [4]                ; Write cycle recovery time.
-    jmp begin              ; tDH, tWC must be met.
+    jmp begin              ; tWC must be met.
 
 read_branch:
-    mov pindirs, ~y        ; Data pins are inputs.
-    set pins, CMD_CS_ON    ; Lower CS only. Start of tRC, tCO.
-    nop[5]                 ; tCO delay.
-    nop[6]                 ; tCO delay.
-    in pins, 17            ; Sample pins into ISR. tCO mst be met.
+    mov pindirs, ~y        ; Data pins act as inputs to the Pico.
+    nop [5]                ; tA-tCO delay 1.
+    nop [6]                ; tA-tCO delay 2.
+    nop [7]                ; tA-tCO delay 3.
+    set pins, CMD_CS_ON    ; Lower CS only. tA-tCO must be met. Start of tCO.
+    nop [8]                ; tCO delay 1.
+    nop [9]                ; tCO delay 2.
+    nop [10]               ; tCO delay 3.
+    in pins, 17            ; Sample the data into the ISR. tA and tCO must be met.
     in NULL, 15            ; Shift pins right so they start at LSB of ISR.
     push noblock           ; Send ISR to input FIFO.
-    set pins, CMD_ALL_OFF  ; Deselect the data. Start of tOTD.
-    nop [7]                ; Read cycle recovery time 1.
-    nop [8]                ; Read cycle recovery time 2.
-    nop [9]                ; Read cycle recovery time 3.
-    nop [10]                ; Read cycle recovery time 4.
-    jmp begin              ; tOTD, tRC must be met.
+    set pins, CMD_ALL_OFF  ; Deselect the data.
+    jmp begin              ; tRC must be met.

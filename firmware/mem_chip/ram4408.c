@@ -49,6 +49,7 @@ static mem_chip_t self = {
     .short_name = SHORT_NAME,
     .timing_family = "ram" SHORT_NAME,
     .get_socket = socket_4416,
+    .special_instructions = "",
     .variants = {
         .len = 2,
         .list = {

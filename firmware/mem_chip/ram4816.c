@@ -33,6 +33,7 @@ static mem_chip_t self = {
         },
     },
     .get_socket = socket_4164,
+    .special_instructions = "",
     .delay_sets = {
         .len = 3,
         .wid = FAM_1BIT_1RAS_256K_DELAY_SET_COLS,

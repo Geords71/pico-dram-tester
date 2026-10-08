@@ -17,7 +17,10 @@ static bool prompt_active = false;
 
 static void show() {
     char msg[64];
-    sprintf(msg, "Place chip in %s socket", mem_tester->chip->get_socket()->name);
+    sprintf(msg, "Place chip in %s socket. %s", 
+        mem_tester->chip->get_socket()->name,
+        mem_tester->chip->special_instructions
+    );
     paint_gui_messagebox(
         "Insert Chip",
         msg,

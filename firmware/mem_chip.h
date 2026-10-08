@@ -30,6 +30,7 @@ typedef struct {
     const char *timing_family;
     delay_sets_t delay_sets;
     const socket_t *(*get_socket)();
+    char *special_instructions;
 } mem_chip_t;
 
 extern void mem_chip_load_config(mem_chip_t *chip);
