@@ -1,6 +1,6 @@
-# Pico DRAM Tester
+# Pico RAM Tester
 
-Having trouble with your old-school DIP dynamic RAM chips? Here's a simple
+Having trouble with your old-school DIP RAM chips? Here's a simple
 RAM tester that will give you a definitive pass or fail for a variety of
 chips.
 
@@ -21,6 +21,7 @@ Benefits
 
 Supported Devices
 
+* 2114 (1k x 4 SRAM)
 * 4027 (4K x 1)
 * 4108 (8K x 1 that are 4116s with only half test good: MK4108, TMS4108, etc)
 * 4116 (16K x 1)
@@ -36,7 +37,7 @@ Supported Devices
 
 Out of scope
 
-* SRAM, DRAM chips larger than 1MBit
+* RAM chips larger than 1MBit
 * Logic chips
 
 ## Construction
@@ -84,30 +85,30 @@ prebuilt firmware file [pmemtest.uf2](firmware/pmemtest.uf2) to this device, and
 program itself. Reset the power and you should see a menu of chips on the LCD
 screen.
 
-## Using the DRAM Tester
+## Using the RAM Tester
 
 Before starting, connect the tester to a power source:
 
 * If you did not install U7 and U8, connect a bench supply to the GND, -5V, +5V, and +12V test points. Connect the Pico 2 USB jack to a power adapter or computer.
 * If you installed U7 and U8, connect a 5V bench supply to the 5VIN and GND test points. Instead of a bench supply, you could connect the Pico 2 USB jack to a power adapter, but you won't be able to control the voltage. A computer often has a much lower voltage and you may fail RAM chips that actually function at 5V.
 
-1. Install the chip in the socket designated for that type of memory chip, following the pin 1 orientation (the pin 1 notch faces the ZIF socket lever). Note that some of the sockets are used for several types of memory.
-2. Rotate the selection knob until the correct part number is highlighted, and push down on the top of the selection knob (it's also a button!)
-3. If you make a mistake, press the button to the left of the selection knob to go back.
-4. After selecting a part, you need to pick the correct speed grade to run the
+1. Install the chip in the socket designated for that type of memory chip, following the directed pin orientation. Pin 1 notch faces the ZIF socket lever for most chips unless directed otherwise by the on-screen display. Some of the sockets are used for several types of memory. And, notably, 2114 SRAM is installed UPSIDE DOWN in the 4416/4464 socket.
+2. Choose if you want a standard test or whether you want to rate or soak the chip.
+3. Rotate the selection knob until the correct part number is highlighted, and push down on the top of the selection knob (it's also a button!)
+4. If you make a mistake, press the button to the left of the selection knob to go back.
+5. After selecting a part, you need to pick the correct speed grade to run the
 test. Often the speed grade is marked on the chip as a suffix. For example, -15
 typically means 150ns. If you're not sure, pick the slowest speed.
-5. If you are using an external bench power supply to supply -5V and +12V, turn it on now. If you soldered in the on-board voltage converter modules, you don't need to do anything. Push the top of the selection knob to continue.
-6. The test runs. You will see a red "X" if the test fails or a green checkmark if the test passes.
-7. You can rerun the test immediately by pushing down on the top of the selection knob. Or go back to the menu by pushing the button to the left.
+6. If you are using an external bench power supply to supply -5V and +12V, turn it on now. If you soldered in the on-board voltage converter modules, you don't need to do anything. Push the top of the selection knob to continue.
+7. The test runs. You will see a red "X" if the test fails or a green checkmark if the test passes.
+8. You can re-run the test immediately by pushing down on the top of the selection knob. Or go back to the menu by pushing the button to the left.
 
-Note: The visualization pane on the left is just for entertainment and doesn't
-really represent bad bits.
+Note: The visualization pane on the left is just for entertainment and doesn't really represent bad bits.
 
 ## Technical Details
 
 The Pico 2 microcontroller (RP2350) has built-in high-speed PIO processors
-which are overclocked to 300MHz. This means that the DRAM timing can be set
+which are overclocked to 300MHz. This means that the RAM timing can be set
 to a resolution of 3.3ns. The RAM test runs on the second CPU core, decoupling
 it from the GUI, which runs on the first CPU core.
 
@@ -123,7 +124,7 @@ RAM testing can be surprisingly complicated. There are many kinds of failures:
 
 There are a number of "traditional" RAM tests such as the checkerboard or
 walking 1/0, but these tests can be slow and don't have precise coverage over
-all failure modes. The Pico DRAM Tester uses more modern testing algorithms:
+all failure modes. The Pico RAM Tester uses more modern testing algorithms:
 
 * March-B. This is a sequence of linear reads and writes designed to catch address faults, stuck-at faults, transition faults, and coupling faults.
 * Pseudorandom test. This test loads a pseudorandom number sequence into the memory, reads it back, and checks to make sure it didn't change. The test is repeated with 64 different pseudorandom patterns to enhance coverage. The patterns are identical between runs, making the test repeatable. The test only uses pseudorandom data and does not randomize the address. This test can detect many pattern-sensitive faults.
@@ -137,10 +138,9 @@ all failure modes. The Pico DRAM Tester uses more modern testing algorithms:
 
 Check your solder connections. Does the Pico 2 board show up in bootloader mode when you plug it into a computer?
 
-The Pico DRAM Tester uses an overclocked Pico 2 configuration.
+The Pico RAM Tester uses an overclocked Pico 2 configuration.
 Some Pico 2 boards may not work well at 300MHz, crashing or not drawing the GUI on the screen correctly.
 You may be able to get it working by editing pmemtest.c, find the line `vreg_set_voltage(VREG_VOLTAGE_1_15);` and change the voltage setting to `VREG_VOLTAGE_1_20`.
-
 
 ## License
 
