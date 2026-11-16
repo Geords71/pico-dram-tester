@@ -68,7 +68,7 @@ static config_t self = {
     .enc_states_per_click = 2,
     .tests_pseudo_values = 32,
     .show_socket_prompt = true,
-    .show_power_prompt = false,
+    .show_power_prompt = true,
 };
 
 static const config_field_t config_schema[] = {
